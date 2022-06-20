@@ -29,7 +29,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, SequentialSampler, Subset
 from torch.utils.data.distributed import DistributedSampler
-from tqdm import tqdm
+from tqdm import tqdm # instantly makes your loops show a smart progress meter, just wrap any iterable with tqdm(iterable)
 
 import transformers
 from transformers import (
@@ -90,12 +90,29 @@ def compute_heads_importance(
     labels = None
     tot_tokens = 0.0
 
+    """
+    tqdm: wrap any iterable with tqdm(iterable), and you are done.
+    arg1: desc-> prefix for the progressbar
+    arg2: disable-> whether to disable the entire progressbar wrapper [default: False].
+        the local rank should satisfy = -1 or 0, local_rank refers to whether to set up the distributed training, 
+        if the value is greater than or equal to 0, it means the distributed training will be used.
+    
+    """
     for step, inputs in enumerate(tqdm(eval_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])):
         for k, v in inputs.items():
             inputs[k] = v.to(args.device)
 
         # Do a forward pass (not with torch.no_grad() since we need gradients for importance score - see below)
         outputs = model(**inputs, head_mask=head_mask)
+        """
+        outputs has four optional components:
+            1. loss
+            2. logits
+            3. hidden_states
+            4. attentions
+        No matter what the outputs is considered to be, tuple or dictionary, it only considers the attributes that don't have None values.
+        The generic model outputs description can be found here: https://huggingface.co/docs/transformers/main_classes/output
+        """
         loss, logits, all_attentions = (
             outputs[0],
             outputs[1],
