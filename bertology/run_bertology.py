@@ -121,12 +121,24 @@ def compute_heads_importance(
         loss.backward()  # Backpropagate to populate the gradients in the head mask
 
         if compute_entropy:
+            """
+            detach(): cut off the back propagation, and the value who execute the detach will have no gradient.
+            unsqueeze(1): 
+                >>> x = torch.tensor([1, 2, 3, 4])
+                >>> torch.unsqueeze(x, 0)
+                    tensor([[ 1,  2,  3,  4]])
+                >>> torch.unsqueeze(x, 1)
+                    tensor([[ 1],
+                            [ 2],
+                            [ 3],
+                            [ 4]])
+            """
             for layer, attn in enumerate(all_attentions):
                 masked_entropy = entropy(attn.detach()) * inputs["attention_mask"].float().unsqueeze(1)
                 attn_entropy[layer] += masked_entropy.sum(-1).sum(0).detach()
 
         if compute_importance:
-            head_importance += head_mask.grad.abs().detach()
+            head_importance += head_mask.grad.abs().detach() # abs() absolute value
 
         # Also store our logits/labels if we want to compute metrics afterwards
         if preds is None:
@@ -136,14 +148,19 @@ def compute_heads_importance(
             preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
             labels = np.append(labels, inputs["labels"].detach().cpu().numpy(), axis=0)
 
+        # tot_tokens
         tot_tokens += inputs["attention_mask"].float().detach().sum().data
 
     # Normalize
-    attn_entropy /= tot_tokens
-    head_importance /= tot_tokens
+    attn_entropy /= tot_tokens # attn_entropy = attn_entropy / tot_tokens
+    head_importance /= tot_tokens # head_importance = head_importance / tot_tokens
     # Layerwise importance normalization
     if not args.dont_normalize_importance_by_layer:
         exponent = 2
+        """
+        torch.pow(input, exponent):
+            Takes the power of each element in input with exponent and returns a tensor with the result.
+        """
         norm_by_layer = torch.pow(torch.pow(head_importance, exponent).sum(-1), 1 / exponent)
         head_importance /= norm_by_layer.unsqueeze(-1) + 1e-20
 
@@ -179,6 +196,16 @@ def mask_heads(args, model, eval_dataloader):
     logger.info("Pruning: original score: %f, threshold: %f", original_score, original_score * args.masking_threshold)
 
     new_head_mask = torch.ones_like(head_importance)
+    """
+    torch.numel(input)-> int
+        Returns the total number of elements in the input tensor.
+        >>> a = torch.randn(1, 2, 3, 4, 5)
+        >>> torch.numel(a)
+        120
+        >>> a = torch.zeros(4,4)
+        >>> torch.numel(a)
+        16
+    """
     num_to_mask = max(1, int(new_head_mask.numel() * args.masking_amount))
 
     current_score = original_score
