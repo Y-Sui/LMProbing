@@ -33,7 +33,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(
     filter(lambda p: p.requires_grad, model.parameters()))  # only update the parameters who are set to requires_grad
 
-epochs = 1
+epochs = 5
 training_data = SST2()
 train_dataloader = DataLoader(training_data, batch_size=16, shuffle=True)
 
