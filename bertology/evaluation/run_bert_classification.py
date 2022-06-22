@@ -19,7 +19,7 @@ class BertForClassification(nn.Module):
     def forward(self, input_ids, attention_mask):
         backbone = self.backbone(input_ids, attention_mask=attention_mask)
         # backbone has the following shape: (batch_size, sequence_length, 768)
-        l1 = self.linear1(backbone[0])  # extract the 1st token's embeddings
+        l1 = self.linear1(backbone[0])  # extract the last_hidden_state of the backbone model
         dropout = self.dropout(l1)
         l2 = self.linear2(dropout)
         return l2
@@ -33,9 +33,9 @@ criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(
     filter(lambda p: p.requires_grad, model.parameters()))  # only update the parameters who are set to requires_grad
 
-epochs = 5
+epochs = 1
 training_data = SST2()
-train_dataloader = DataLoader(training_data, batch_size=4, shuffle=True)
+train_dataloader = DataLoader(training_data, batch_size=16, shuffle=True)
 
 for epoch in range(epochs):
     for batch in train_dataloader:
@@ -58,4 +58,15 @@ for epoch in range(epochs):
         loss.backward()
         optimizer.step()
 
+# save the model
+PATH = "../../output/bert_classification"
+torch.save(model.state_dict(), PATH+".bin")
+
+# test
+model.load_state_dict(torch.load(PATH+".bin"))
 input = "Pretty much sucks , but has a funny moment or two"
+model_input = tokenizer(input, padding="max_length", max_length=50, truncation=True, return_tensors="pt")
+
+output = model(model_input["input_ids"], model_input["attention_mask"])
+
+print(torch.log_softmax(output[:,-1], dim=1))

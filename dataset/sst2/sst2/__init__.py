@@ -8,7 +8,6 @@ _SSTs = {
     "test": _SST + "test.tsv",
 }
 
-
 # --> DataLoader can do the batch computation for us
 
 # Implement a custom Dataset:
@@ -38,15 +37,3 @@ class SST2(Dataset):
     # we can call len(dataset) to return the size
     def __len__(self):
         return self.n_samples
-
-
-# # create dataset
-# dataset = SST2()
-#
-# # Load whole dataset with DataLoader
-# # shuffle: shuffle data, good for training
-# # num_workers: faster loading with multiple subprocesses
-# # !!! IF YOU GET AN ERROR DURING LOADING, SET num_workers TO 0 !!!
-# train_loader = DataLoader(dataset=dataset,
-#                           batch_size=4,
-#                           shuffle=True)
