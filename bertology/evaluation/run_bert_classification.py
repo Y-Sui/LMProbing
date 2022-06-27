@@ -1,31 +1,33 @@
-from pathlib import Path
-
 import argparse
 import os
+from pathlib import Path
+
+import datasets
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-import datasets
 from tqdm import tqdm
 from transformers import AutoModel, AutoTokenizer
 
-from dataset.sst2.sst2 import SST2
 from dataset.sst.sst import SST
+from dataset.sst2.sst2 import SST2
+
 
 def save_model(model, dirpath):
     # save results
     if os.path.exists(dirpath):
         if os.path.exists(os.path.join(dirpath, "config.json")) and os.path.isfile(
-            os.path.join(dirpath, "config.json")
+                os.path.join(dirpath, "config.json")
         ):
             os.remove(os.path.join(dirpath, "config.json"))
         if os.path.exists(os.path.join(dirpath, "pytorch_model.bin")) and os.path.isfile(
-            os.path.join(dirpath, "pytorch_model.bin")
+                os.path.join(dirpath, "pytorch_model.bin")
         ):
             os.remove(os.path.join(dirpath, "pytorch_model.bin"))
     else:
         os.makedirs(dirpath)
     model.save_pretrained(dirpath)
+
 
 class BertForClassification(nn.Module):
     def __init__(self):
@@ -44,6 +46,7 @@ class BertForClassification(nn.Module):
         dropout = self.dropout(l1)
         l2 = self.linear2(dropout)
         return l2
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -107,18 +110,19 @@ def main():
     if args.dataset == "SST2":
         training_data = SST2("train")
         evaluation_data = SST2("valid")
-    elif args.dataset == "sst": # will add later
+    elif args.dataset == "sst":  # will add later
         pass
     else:
         print("The dataset is empty!")
     train_dataloader = DataLoader(training_data, batch_size=args.batch_size, shuffle=args.no_shuffle)
     eval_dataloader = DataLoader(evaluation_data, batch_size=args.batch_size, shuffle=args.no_shuffle)
     # Reload the model
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path) # "../../module/bert-base-uncased"
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)  # "../../module/bert-base-uncased"
     model = BertForClassification().to(args.device)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(
-        filter(lambda p: p.requires_grad, model.parameters()))  # only update the parameters who are set to requires_grad
+        filter(lambda p: p.requires_grad,
+               model.parameters()))  # only update the parameters who are set to requires_grad
     # PATH = "../../output/bert_classification"
     output_model_file = args.output_dir + "bin"
 
@@ -128,7 +132,7 @@ def main():
     else:
         print("The model file is empty, train the model!")
         # add tqdm to the pipe
-        for epoch in tqdm(range(args.epochs)):
+        for _ in tqdm(range(args.epochs)):
             # train the model
             model.train()
             for batch in tqdm(train_dataloader):
@@ -147,12 +151,13 @@ def main():
                 logits = outputs[:, -1]
                 predictions = torch.softmax(logits, dim=-1)
 
-                loss = criterion(predictions, targets) # make sure the predictions and the targets are on the same device!
+                loss = criterion(predictions,
+                                 targets)  # make sure the predictions and the targets are on the same device!
                 loss.backward()
                 optimizer.step()
             # evaluate the model
             model.eval()
-            glue_metric = datasets.load_metric('glue', 'sst2') # load the metrics
+            glue_metric = datasets.load_metric('glue', 'sst2')  # load the metrics
             for batch in tqdm(eval_dataloader):
                 with torch.no_grad():
                     data = list(batch[0])
@@ -175,15 +180,17 @@ def main():
 
         # torch.save(model.state_dict(), args.output_dir + ".bin")  # save the model
 
-
     # test the model
     input = "Pretty much sucks, but has a funny moment or two"
-    model_input = tokenizer(input, padding="max_length", max_length=args.max_length, truncation=True, return_tensors="pt")
+    model_input = tokenizer(input, padding="max_length", max_length=args.max_length, truncation=True,
+                            return_tensors="pt")
     model_input.to(args.device)
     outputs = model(model_input["input_ids"], model_input["attention_mask"])
     logits = outputs
     predictions = torch.squeeze(torch.softmax(logits, dim=-1)).sum(0)
     labels = "negative" if predictions[0] > predictions[1] else "positive"
     print(labels)
+
+
 if __name__ == "__main__":
     main()
