@@ -16,10 +16,10 @@ _SSTs = {
 
 class SST2(Dataset):
 
-    def __init__(self):
+    def __init__(self,source=""):
         # Initialize data, download, etc.
         # read with numpy or pandas
-        xy = pd.read_csv(_SSTs["train"], sep='\t').to_numpy()
+        xy = pd.read_csv(_SSTs[source], sep='\t').to_numpy()
         self.n_samples = xy.shape[0]
 
         # here the first column is the text, the second column is the label
