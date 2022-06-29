@@ -23,4 +23,11 @@ torch
 tqdm
 datasets
 ```
-
+### Scripts
+```Python
+cd ./bertology/evaluation
+python run_bert_classification.py --model_name_or_path ../../module/bert-base-uncased /
+                                  --output_dir ../../output/bert_classification /
+                                  --dataset SST2 /
+                                  --epochs 5
+```
