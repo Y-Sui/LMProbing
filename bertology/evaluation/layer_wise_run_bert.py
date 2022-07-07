@@ -36,14 +36,23 @@ class BertForClassification(nn.Module):
         self.linear1 = nn.Linear(768, 256)
         self.dropout = nn.Dropout(0.5)
         self.linear2 = nn.Linear(256, 2)  # 2 is the number of classes in this example
+        self.__hidden_states__()
 
     def forward(self, input_ids, attention_mask):
-        backbone = self.backbone(input_ids, attention_mask=attention_mask)
+        backbone = self.backbone(input_ids, attention_mask=attention_mask, output_hidden_states=True)
         # backbone has the following shape: (batch_size, sequence_length, 768)
-        l1 = self.linear1(backbone[0])  # extract the last_hidden_state of the backbone model
-        dropout = self.dropout(l1)
-        l2 = self.linear2(dropout)
-        return l2
+        # layer-wise
+        layers = list(backbone.hidden_states)
+        for i in range(len(backbone.hidden_states)):
+            l1 = self.linear1(backbone.hidden_states[i])
+            dropout = self.dropout(l1)
+            l2 = self.linear2(dropout)
+            layers[i] = l2
+        return layers
+
+    def __hidden_states__(self):
+        backbone = self.backbone(torch.tensor([[1,1]]), torch.tensor([[1,1]]), output_hidden_states=True)
+        self.hidden_states = backbone.hidden_states
 
 
 def main():
@@ -130,69 +139,61 @@ def main():
     else:
         print("\nThe model file is empty, train the model!\n")
         # add tqdm to the pipe
-        for _ in tqdm(range(1, args.epochs + 1)):
-            # train the model
-            model.train()
-            for batch in tqdm(train_dataloader):
-                data = list(batch[0])
-                targets = torch.tensor(list(batch[1])).to(args.device)
-                optimizer.zero_grad()
-                # Style-1:
-                encoding = tokenizer.batch_encode_plus(data, return_tensors='pt', padding=True, truncation=True,
-                                                       max_length=args.max_length,
-                                                       add_special_tokens=True)
-                input_ids = encoding['input_ids'].to(args.device)
-                attention_mask = encoding['attention_mask'].to(args.device)
+        # pbar_epochs = tqdm([f"Epochs-{i}" for i in range(1, args.epochs + 1)])
+        for layer in tqdm(range(len(model.hidden_states))):
+            for epoch in tqdm(range(1, args.epochs +1)):
+                # pbar_epochs.set_description("Processing %s "%epoch)
+                # train the model
+                model.train()
+                for batch in tqdm(train_dataloader):
+                    data = list(batch[0])
+                    targets = torch.tensor(list(batch[1])).to(args.device)
+                    optimizer.zero_grad()
+                    # Style-1:
+                    encoding = tokenizer.batch_encode_plus(data, return_tensors='pt', padding=True, truncation=True,
+                                                           max_length=args.max_length,
+                                                           add_special_tokens=True)
+                    input_ids = encoding['input_ids'].to(args.device)
+                    attention_mask = encoding['attention_mask'].to(args.device)
 
-                outputs = model(input_ids, attention_mask)
-                print(outputs)
-                logits = outputs[:, -1]
-                predictions = torch.softmax(logits, dim=-1)
+                    outputs = model(input_ids, attention_mask)
+                    logits = outputs[layer][:, -1] # CLS head
+                    predictions = torch.softmax(logits, dim=-1)
 
-                # Style-2:
-                # model_input = tokenizer(data, padding="max_length", max_length=args.max_length, truncation=True,
-                #                         return_tensors="pt")
-                # model_input.to(args.device)
-                # outputs = model(model_input["input_ids"], model_input["attention_mask"])
-                # logits = outputs
-                # predictions = torch.softmax(logits, dim=-1)
+                    # Style-2:
+                    # model_input = tokenizer(data, padding="max_length", max_length=args.max_length, truncation=True,
+                    #                         return_tensors="pt")
+                    # model_input.to(args.device)
+                    # outputs = model(model_input["input_ids"], model_input["attention_mask"])
+                    # logits = outputs
+                    # predictions = torch.softmax(logits, dim=-1)
 
-                loss = criterion(predictions,
-                                 targets)  # make sure the predictions and the targets are on the same device!
-                loss.backward()
-                optimizer.step()
-            # evaluate the model (no need to use the without_grad():)
-            model.eval()
-            glue_metric = datasets.load_metric('glue', 'sst2')  # load the metrics
-            for batch in tqdm(eval_dataloader):
-                data = list(batch[0])
-                targets = torch.tensor(list(batch[1])).to(args.device)
-                model_input = tokenizer(data, padding="max_length", max_length=args.max_length, truncation=True,
-                                        return_tensors="pt")
-                model_input.to(args.device)
-                outputs = model(model_input["input_ids"], model_input["attention_mask"])
-                logits = outputs
-                predictions = torch.squeeze(torch.softmax(logits, dim=-1)).sum(0)
-                model_predictions = []
-                for i in range(len(targets)):
-                    model_predictions.append(0) if predictions[i][0] > predictions[i][1] else model_predictions.append(
-                        1)
-                glue_metric.add_batch(predictions=model_predictions, references=targets)
-            final_score = glue_metric.compute()
-            print(final_score)
+                    loss = criterion(predictions,
+                                     targets)  # make sure the predictions and the targets are on the same device!
+                    loss.backward()
+                    optimizer.step()
+                # evaluate the model (no need to use the without_grad():)
+                model.eval()
+                glue_metric = datasets.load_metric('glue', 'sst2')  # load the metrics
+                for batch in tqdm(eval_dataloader):
+                    data = list(batch[0])
+                    targets = torch.tensor(list(batch[1])).to(args.device)
+                    model_input = tokenizer(data, padding="max_length", max_length=args.max_length, truncation=True,
+                                            return_tensors="pt")
+                    model_input.to(args.device)
+                    outputs = model(model_input["input_ids"], model_input["attention_mask"])
+                    logits = outputs[layer]
+                    predictions = torch.squeeze(torch.softmax(logits, dim=-1)).sum(0)
+                    model_predictions = []
+                    for i in range(len(targets)):
+                        model_predictions.append(0) if predictions[i][0] > predictions[i][1] else model_predictions.append(
+                            1)
+                    glue_metric.add_batch(predictions=model_predictions, references=targets)
+                final_score = glue_metric.compute()
+                with open(args.output_dir + "_layer_wise_final_score.txt", "a") as file:
+                    file.write(f"Accuracy of the Layer_{layer} is {final_score}")
 
-        # torch.save(model.state_dict(), args.output_dir + ".bin")  # save the model
-
-    # test the model
-    input = "Pretty much sucks, but has a funny moment or two"
-    model_input = tokenizer(input, padding="max_length", max_length=args.max_length, truncation=True,
-                            return_tensors="pt")
-    model_input.to(args.device)
-    outputs = model(model_input["input_ids"], model_input["attention_mask"])
-    logits = outputs
-    predictions = torch.squeeze(torch.softmax(logits, dim=-1)).sum(0)
-    labels = "negative" if predictions[0] > predictions[1] else "positive"
-    print(labels)
+            torch.save(model.state_dict(), args.output_dir + f"layer_{layer}.bin")  # save the model
 
 
 if __name__ == "__main__":
