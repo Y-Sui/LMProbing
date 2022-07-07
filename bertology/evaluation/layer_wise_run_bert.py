@@ -143,6 +143,7 @@ def main():
         for layer in tqdm(range(len(model.hidden_states))):
             for epoch in tqdm(range(1, args.epochs +1)):
                 # pbar_epochs.set_description("Processing %s "%epoch)
+                
                 # train the model
                 model.train()
                 for batch in tqdm(train_dataloader):
@@ -172,6 +173,7 @@ def main():
                                      targets)  # make sure the predictions and the targets are on the same device!
                     loss.backward()
                     optimizer.step()
+                    
                 # evaluate the model (no need to use the without_grad():)
                 model.eval()
                 glue_metric = datasets.load_metric('glue', 'sst2')  # load the metrics
