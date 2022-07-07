@@ -191,7 +191,7 @@ def main():
                     glue_metric.add_batch(predictions=model_predictions, references=targets)
                 final_score = glue_metric.compute()
                 with open(args.output_dir + "_layer_wise_final_score.txt", "a") as file:
-                    file.write(f"Accuracy of the Layer_{layer} is {final_score}")
+                    file.write(f"Accuracy of the Layer_{layer} is {final_score}"+"\n")
 
             torch.save(model.state_dict(), args.output_dir + f"layer_{layer}.bin")  # save the model
 
