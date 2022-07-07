@@ -30,7 +30,7 @@ def save_model(model, dirpath):
 class BertForClassification(nn.Module):
     def __init__(self):
         super(BertForClassification, self).__init__()
-        self.backbone = AutoModel.from_pretrained("../../module/bert-base-uncased")
+        self.backbone = AutoModel.from_pretrained("bert-base-uncased")
         for p in self.parameters():
             p.requires_grad = False  # freeze the backbone model
         self.linear1 = nn.Linear(768, 256)
@@ -67,7 +67,7 @@ def main():
     )
     parser.add_argument(
         "--model_name_or_path",
-        default="../../module/bert-base-uncased",
+        default="bert-base-uncased",
         type=str,
         required=True,
         help="Path to save the pretrained model"
