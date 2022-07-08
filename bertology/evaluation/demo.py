@@ -19,7 +19,7 @@ class BertForClassification(nn.Module):
         for p in self.parameters():
             p.requires_grad = False  # freeze the backbone model
         self.linear1 = nn.Linear(768, 256)
-        self.dropout = nn.Dropout(0.5)
+        self.dropout = nn.Dropout(0.2)
         self.linear2 = nn.Linear(256, 2)  # 2 is the number of classes in this example
         self.__hidden_states__()
 
@@ -91,7 +91,7 @@ def train(epochs, trainLoader, model, tokenizer, max_length, device):
                 loss = criterion(predictions, targets)
                 loss.backward()
                 optimizer.step()
-                if i % 1 == 0:
+                if i % 200 == 0:
                     print(f"epoch: {epoch}, batch: {i}, loss: {loss.data}")
         torch.save(model, output_path + f"bert_classification_head_{head}.bin")
 
