@@ -1,5 +1,13 @@
 import argparse
 import os
+import sys
+
+curPath = os.path.abspath(os.path.dirname(__file__))
+uppPath = os.path.split(curPath)[0]
+rootPath = os.path.split(uppPath)[0]
+sys.path.insert(0, rootPath+"/dataset/sst2/data")
+sys.path.insert(0, rootPath+"/dataset/sst2/sst2")
+sys.path.insert(0, rootPath)
 
 import datasets
 import torch
