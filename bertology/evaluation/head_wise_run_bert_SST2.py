@@ -24,7 +24,7 @@ class BertForClassification(nn.Module):
         super(BertForClassification, self).__init__()
         self.backbone = BertModel.from_pretrained("bert-base-uncased")
         self.num_heads = self.backbone.config.num_attention_heads
-        for p in self.parameters():
+        for p in self.backbone.parameters():
             p.requires_grad = False  # freeze the backbone model
         self.linear1 = nn.Linear(768, 256)
         self.dropout = nn.Dropout(0.2)
@@ -83,7 +83,7 @@ def train(epochs, trainLoader, model, tokenizer, max_length, device):
         for epoch in tqdm(range(1, epochs + 1)):
             for i, batch in enumerate(tqdm(trainLoader)):
                 data = list(batch[0])
-                targets = torch.tensor(batch[1]).to(device)
+                targets = torch.tensor(batch[1]).float().to(device)
                 optimizer.zero_grad()
                 encoding = tokenizer.batch_encode_plus(data, return_tensors='pt', padding=True, truncation=True,
                                                        max_length=max_length,
@@ -93,15 +93,15 @@ def train(epochs, trainLoader, model, tokenizer, max_length, device):
 
                 outputs = model(input_ids, attention_mask)
                 logits = outputs[head,:,0,:]  # CLS
-                predictions = torch.softmax(logits, dim=-1).to(device)
+                predictions = torch.argmax(logits, dim=-1).float().to(device)
                 # make sure the predictions and the targets are on the same device!
                 loss = criterion(predictions, targets)
+                loss.requires_grad = True
                 loss.backward()
                 optimizer.step()
                 if i % 200 == 0:
                     print(f"epoch: {epoch}, batch: {i}, loss: {loss.data}")
         torch.save(model, output_path + f"bert_classification_head_{head}.bin")
-
 
 
 # test function
@@ -160,12 +160,12 @@ def main():
     else:
         print("The dataset is empty!")
 
-    eval_dataloader = DataLoader(evaluation_data, batch_size=args.batch_size, shuffle=args.shuffle)
+    eval_dataloader = DataLoader(evaluation_data, batch_size=args.batch_size, shuffle=True)
 
     # train
     model = BertForClassification()
     tokenizer = BertTokenizer.from_pretrained(args.model_name_or_path)
-    train_dataloader = DataLoader(training_data, batch_size=args.batch_size, shuffle=args.shuffle)
+    train_dataloader = DataLoader(training_data, batch_size=args.batch_size, shuffle=True)
     train(args.epochs, train_dataloader, model, tokenizer, args.max_length, args.device)
 
     # test

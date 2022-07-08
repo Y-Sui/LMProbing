@@ -14,7 +14,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel, BertTokenizer
 
 from dataset.sst2.sst2 import SST2
 
@@ -39,7 +39,7 @@ class BertForClassification(nn.Module):
     def __init__(self):
         super(BertForClassification, self).__init__()
         self.backbone = AutoModel.from_pretrained("bert-base-uncased")
-        for p in self.parameters():
+        for p in self.backbone.parameters():
             p.requires_grad = False  # freeze the backbone model
         self.linear1 = nn.Linear(768, 256)
         self.dropout = nn.Dropout(0.5)
@@ -75,7 +75,7 @@ def train(epochs, trainLoader, model, tokenizer, max_length, device):
         for epoch in tqdm(range(1, epochs + 1)):
             for i, batch in enumerate(tqdm(trainLoader)):
                 data = list(batch[0])
-                targets = torch.tensor(batch[1]).to(device)
+                targets = torch.tensor(batch[1]).float().to(device)
                 optimizer.zero_grad()
                 encoding = tokenizer.batch_encode_plus(data, return_tensors='pt', padding=True, truncation=True,
                                                        max_length=max_length,
@@ -84,10 +84,11 @@ def train(epochs, trainLoader, model, tokenizer, max_length, device):
                 attention_mask = encoding['attention_mask'].to(device)
 
                 outputs = model(input_ids, attention_mask)
-                logits = outputs[layer,:,0,:]  # CLS
-                predictions = torch.softmax(logits, dim=-1).to(device)
+                logits = outputs[layer][:,0,:]  # CLS
+                predictions = torch.argmax(logits, dim=-1).float().to(device)
                 # make sure the predictions and the targets are on the same device!
                 loss = criterion(predictions, targets)
+                loss.requires_grad = True
                 loss.backward()
                 optimizer.step()
                 if i % 30 == 0:
@@ -101,13 +102,13 @@ def test(layer, eval_dataloader, model, tokenizer, max_length, device):
         glue_metric = datasets.load_metric('glue', 'sst2')  # load the metrics
         for batch in tqdm(eval_dataloader):
             data = list(batch[0])
-            targets = torch.tensor(batch[1]).to(device)
+            targets = torch.tensor(batch[1]).float().to(device)
             model_input = tokenizer(data, padding="max_length", max_length=max_length, truncation=True,
                                     return_tensors="pt")
             model_input.to(device)
             outputs = model(model_input["input_ids"], model_input["attention_mask"])
-            logits = outputs[layer,:,0,:]  # CLS
-            predictions = torch.argmax(logits, dim=-1).to(device)
+            logits = outputs[layer][:,0,:]  # CLS
+            predictions = torch.argmax(logits, dim=-1).float().to(device)
             # for i in range(len(targets)):
             #     model_predictions.append(0) if predictions[i][0] > predictions[i][1] else model_predictions.append(1)
             glue_metric.add_batch(predictions=predictions, references=targets)
@@ -144,19 +145,19 @@ def main():
     else:
         print("The dataset is empty!")
 
-    eval_dataloader = DataLoader(evaluation_data, batch_size=args.batch_size, shuffle=args.shuffle)
+    eval_dataloader = DataLoader(evaluation_data, batch_size=args.batch_size, shuffle=True)
 
     # train
     model = BertForClassification()
     tokenizer = BertTokenizer.from_pretrained(args.model_name_or_path)
-    train_dataloader = DataLoader(training_data, batch_size=args.batch_size, shuffle=args.shuffle)
+    train_dataloader = DataLoader(training_data, batch_size=args.batch_size, shuffle=True)
     train(args.epochs, train_dataloader, model, tokenizer, args.max_length, args.device)
 
     # test
     for layer in range(len(model.hidden_states)):
         output_path = "../../output/bert_classification_layer_wise/"
         model = torch.load(output_path+f"bert_classification_layer_{layer}.bin")
-        test(head, eval_dataloader, model, tokenizer, args.max_length, args.device)
+        test(layer, eval_dataloader, model, tokenizer, args.max_length, args.device)
 
 
 
