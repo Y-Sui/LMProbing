@@ -1,3 +1,3 @@
-negative
-neutral
-positive
+version https://git-lfs.github.com/spec/v1
+oid sha256:935b15fe57de1d9b37ea588fef918986582a8ff7b6300865e8b18866f8559e9a
+size 29
