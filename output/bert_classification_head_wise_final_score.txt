@@ -1,2 +1,0 @@
-Accuracy of the head_0 is {'accuracy': 0.5086107921928817}
-Accuracy of the head_1 is {'accuracy': 0.5086107921928817}
