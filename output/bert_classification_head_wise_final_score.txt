@@ -1,0 +1,12 @@
+Accuracy of the head_0 is {'accuracy': 0.5086107921928817}
+Accuracy of the head_1 is {'accuracy': 0.48220436280137774}
+Accuracy of the head_2 is {'accuracy': 0.5063145809414467}
+Accuracy of the head_3 is {'accuracy': 0.4753157290470723}
+Accuracy of the head_4 is {'accuracy': 0.4845005740528129}
+Accuracy of the head_5 is {'accuracy': 0.5177956371986223}
+Accuracy of the head_6 is {'accuracy': 0.5269804822043628}
+Accuracy of the head_7 is {'accuracy': 0.48220436280137774}
+Accuracy of the head_8 is {'accuracy': 0.49827784156142363}
+Accuracy of the head_9 is {'accuracy': 0.5200918484500574}
+Accuracy of the head_10 is {'accuracy': 0.49827784156142363}
+Accuracy of the head_11 is {'accuracy': 0.4890929965556831}

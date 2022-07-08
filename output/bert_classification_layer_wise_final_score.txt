@@ -1,0 +1,13 @@
+Accuracy of the layer_0 is {'accuracy': 0.5005740528128588}
+Accuracy of the layer_1 is {'accuracy': 0.4936854190585534}
+Accuracy of the layer_2 is {'accuracy': 0.513203214695752}
+Accuracy of the layer_3 is {'accuracy': 0.48105625717566014}
+Accuracy of the layer_4 is {'accuracy': 0.47876004592422505}
+Accuracy of the layer_5 is {'accuracy': 0.5086107921928817}
+Accuracy of the layer_6 is {'accuracy': 0.5200918484500574}
+Accuracy of the layer_7 is {'accuracy': 0.47761194029850745}
+Accuracy of the layer_8 is {'accuracy': 0.4925373134328358}
+Accuracy of the layer_9 is {'accuracy': 0.5086107921928817}
+Accuracy of the layer_10 is {'accuracy': 0.5327210103329506}
+Accuracy of the layer_11 is {'accuracy': 0.4833524684270953}
+Accuracy of the layer_12 is {'accuracy': 0.49483352468427094}
