@@ -141,11 +141,10 @@ def main():
         # add tqdm to the pipe
         # pbar_epochs = tqdm([f"Epochs-{i}" for i in range(1, args.epochs + 1)])
         for layer in tqdm(range(len(model.hidden_states))):
+            # train the model
             for epoch in tqdm(range(1, args.epochs +1)):
                 # pbar_epochs.set_description("Processing %s "%epoch)
-                
-                # train the model
-                model.train()
+                # model.train()
                 for batch in tqdm(train_dataloader):
                     data = list(batch[0])
                     targets = torch.tensor(list(batch[1])).to(args.device)
@@ -174,26 +173,26 @@ def main():
                     loss.backward()
                     optimizer.step()
                     
-                # evaluate the model (no need to use the without_grad():)
-                model.eval()
-                glue_metric = datasets.load_metric('glue', 'sst2')  # load the metrics
-                for batch in tqdm(eval_dataloader):
-                    data = list(batch[0])
-                    targets = torch.tensor(list(batch[1])).to(args.device)
-                    model_input = tokenizer(data, padding="max_length", max_length=args.max_length, truncation=True,
-                                            return_tensors="pt")
-                    model_input.to(args.device)
-                    outputs = model(model_input["input_ids"], model_input["attention_mask"])
-                    logits = outputs[layer]
-                    predictions = torch.squeeze(torch.softmax(logits, dim=-1)).sum(0)
-                    model_predictions = []
-                    for i in range(len(targets)):
-                        model_predictions.append(0) if predictions[i][0] > predictions[i][1] else model_predictions.append(
-                            1)
-                    glue_metric.add_batch(predictions=model_predictions, references=targets)
-                final_score = glue_metric.compute()
-                with open(args.output_dir + "_layer_wise_final_score.txt", "a") as file:
-                    file.write(f"Accuracy of the Layer_{layer} is {final_score}"+"\n")
+            # evaluate the model (no need to use the without_grad():)
+            model.eval()
+            glue_metric = datasets.load_metric('glue', 'sst2')  # load the metrics
+            for batch in tqdm(eval_dataloader):
+                data = list(batch[0])
+                targets = torch.tensor(list(batch[1])).to(args.device)
+                model_input = tokenizer(data, padding="max_length", max_length=args.max_length, truncation=True,
+                                        return_tensors="pt")
+                model_input.to(args.device)
+                outputs = model(model_input["input_ids"], model_input["attention_mask"])
+                logits = outputs[layer]
+                predictions = torch.squeeze(torch.softmax(logits, dim=-1)).sum(0)
+                model_predictions = []
+                for i in range(len(targets)):
+                    model_predictions.append(0) if predictions[i][0] > predictions[i][1] else model_predictions.append(
+                        1)
+                glue_metric.add_batch(predictions=model_predictions, references=targets)
+            final_score = glue_metric.compute()
+            with open(args.output_dir + "_layer_wise_final_score.txt", "a") as file:
+                file.write(f"Accuracy of the Layer_{layer} is {final_score}"+"\n")
 
             torch.save(model.state_dict(), args.output_dir + f"layer_{layer}.bin")  # save the model
 
