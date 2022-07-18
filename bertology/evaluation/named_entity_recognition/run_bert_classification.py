@@ -1,126 +1,114 @@
-import argparse
 import os
 
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-from transformers import AutoModel, AutoTokenizer
-from transformers import BertForTokenClassification, BertTokenizer
+import numpy as np
 
-import datasets
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+
 from datasets import load_dataset, load_metric
+from transformers import AutoModelForTokenClassification
+from transformers import AutoTokenizer
+from transformers import DataCollatorForTokenClassification
+from transformers import TrainingArguments, Trainer
 
-datasets = load_dataset("conll2003")
+wnut = load_dataset("conll2003")
+metric = load_metric("seqeval")
 
-task = "ner" # should be one of "ner", "pos" or "chunk"
+task = "ner"
+label_list = wnut["train"].features[f"{task}_tags"].feature.names
 
-def save_model(model, dirpath):
-    # save results
-    if os.path.exists(dirpath):
-        if os.path.exists(os.path.join(dirpath, "config.json")) and os.path.isfile(
-                os.path.join(dirpath, "config.json")
-        ):
-            os.remove(os.path.join(dirpath, "config.json"))
-        if os.path.exists(os.path.join(dirpath, "pytorch_model.bin")) and os.path.isfile(
-                os.path.join(dirpath, "pytorch_model.bin")
-        ):
-            os.remove(os.path.join(dirpath, "pytorch_model.bin"))
-    else:
-        os.makedirs(dirpath)
-    model.save_pretrained(dirpath)
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
 
-class BertForClassification(nn.Module):
-    def __init__(self):
-        super(BertForClassification, self).__init__()
-        self.backbone = AutoModel.from_pretrained("distilbert-base-uncased")
-        self.linear1 = nn.Linear(768, 256)
-        self.dropout = nn.Dropout(0.5)
-        self.linear2 = nn.Linear(256, 2)  # 2 is the number of classes in this example
+def tokenize_and_align_labels(examples):
+    tokenized_inputs = tokenizer(examples["tokens"], truncation=True, is_split_into_words=True)
+    labels = []
+    for i, label in enumerate(examples[f"{task}_tags"]):
+        word_ids = tokenized_inputs.word_ids(batch_index=i)  # Map tokens to their respective word.
+        previous_word_idx = None
+        label_ids = []
+        for word_idx in word_ids:  # Set the special tokens to -100.
+            if word_idx is None:
+                label_ids.append(-100)
+            elif word_idx != previous_word_idx:  # Only label the first token of a given word.
+                label_ids.append(label[word_idx])
+            else:
+                label_ids.append(-100)
+            previous_word_idx = word_idx
+        labels.append(label_ids)
 
-    def forward(self, input_ids, attention_mask):
-        backbone = self.backbone(input_ids, attention_mask=attention_mask)
-        # backbone has the following shape: (batch_size, sequence_length, 768)
-        l1 = self.linear1(backbone[0])  # extract the last_hidden_state of the backbone model
-        dropout = self.dropout(l1)
-        l2 = self.linear2(dropout)
-        return l2
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    # Required parameters
-    parser.add_argument("--dataset",default="SST2",type=str,help="The dataset name, the options can be sst, SST2, etc")
-    parser.add_argument("--model_name_or_path",default="bert-base-uncased",type=str,help="Path to save the pretrained model")
-    parser.add_argument("--output_dir",default="../../output/bert_classification",type=str,help="The output directory where the model predictions and checkpoints will be written.")
-    # Options parameters
-    parser.add_argument("--config_name",default="",type=str,help="Pretrained config name or path if not the same as model_name_or_path",)
-    parser.add_argument("--tokenizer_name",default="",type=str,help="Pretrained tokenizer name or path if not the same as model_name_or_path",)
-    parser.add_argument("--cache_dir",default=None,type=str,help="Where do you want to store the pre-trained models downloaded from s3",)
-    parser.add_argument("--batch_size", default=8, type=int, help="Batch size.")
-    parser.add_argument("--no_shuffle", action="store_true", help="Whether not to shuffle the dataloader")
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--no_cuda", action="store_true", help="Whether not to use CUDA when available")
-    parser.add_argument("--epochs", default=15, type=int)
-    parser.add_argument("--max_length", default=50, type=int, help="Max length of the tokenization")
-    args = parser.parse_args()
-
-    # Setup devices (No distributed training here)
-    args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-
-    # Prepare dataset
-    training_data, evaluation_data = [], []
-    training_data = SST2("train")
-    evaluation_data = SST2("valid")
-    train_dataloader = DataLoader(training_data, batch_size=args.batch_size, shuffle=args.no_shuffle)
-    eval_dataloader = DataLoader(evaluation_data, batch_size=args.batch_size, shuffle=args.no_shuffle)
-    # Reload the model
-    tokenizer = BertTokenizer.from_pretrained(args.model_name_or_path)
-    model = BertForTokenClassification.from_pretrained(args.model_name_or_path).to(args.device)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters())
-    print("\nThe model file is empty, train the model!\n")
-    # add tqdm to the pipe
-    for _ in tqdm(range(1, args.epochs + 1)):
-        # train the model
-        model.train()
-        for batch in tqdm(train_dataloader):
-            data = list(batch[0])
-            targets = torch.tensor(list(batch[1])).float().to(args.device)
-            # print(targets)
-            optimizer.zero_grad()
-            model_input = tokenizer(data, padding="max_length", max_length=args.max_length, truncation=True,
-                                    return_tensors="pt")
-            input_ids = model_input['input_ids'].to(args.device)
-            attention_mask = model_input['attention_mask'].to(args.device)
-
-            outputs = model(input_ids, attention_mask)
-            logits = outputs.logits[:,0,:] # CLS
-            # print(logits)
-            predictions = torch.argmax(logits, dim=-1).float()
-            # print(predictions)
-            loss = criterion(predictions, targets)  # make sure the predictions and the targets are on the same device!
-            loss.requires_grad = True
-            loss.backward()
-            print(loss)
-            optimizer.step()
-    # evaluate the model (no need to use the without_grad():)
-    model.eval()
-    glue_metric = datasets.load_metric('glue', 'sst2')  # load the metrics
-    for batch in tqdm(eval_dataloader):
-        data = list(batch[0])
-        targets = torch.tensor(list(batch[1])).float().to(args.device)
-        model_input = tokenizer(data, padding="max_length", max_length=args.max_length, truncation=True,
-                                return_tensors="pt")
-        model_input.to(args.device)
-        outputs = model(model_input["input_ids"], model_input["attention_mask"])
-        logits = outputs.logits[:,0,:] # CLS
-        predictions = torch.argmax(logits, dim=-1).float()
-        glue_metric.add_batch(predictions=predictions, references=targets)
-    final_score = glue_metric.compute()
-    print(final_score)
+    tokenized_inputs["labels"] = labels
+    return tokenized_inputs
 
 
-if __name__ == "__main__":
-    main()
+raw_list = list(wnut['train'].features.keys())
+# raw_list.append("token_type_ids") # remove these values
+tokenized_wnut = wnut.map(tokenize_and_align_labels, batched=True, remove_columns=raw_list)
+data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer, return_tensors='pt')
+
+model = AutoModelForTokenClassification.from_pretrained("bert-base-uncased", num_labels=14)
+for param in model.bert.parameters():
+    param.requires_grad = False
+
+
+def compute_metrics(p):
+    predictions, labels = p
+    predictions = np.argmax(predictions, axis=2)
+
+    # Remove ignored index (special tokens)
+    true_predictions = [
+        [label_list[p] for (p, l) in zip(prediction, label) if l != -100]
+        for prediction, label in zip(predictions, labels)
+    ]
+    true_labels = [
+        [label_list[l] for (p, l) in zip(prediction, label) if l != -100]
+        for prediction, label in zip(predictions, labels)
+    ]
+
+    results = metric.compute(predictions=true_predictions, references=true_labels)
+    return {
+        "precision": results["overall_precision"],
+        "recall": results["overall_recall"],
+        "f1": results["overall_f1"],
+        "accuracy": results["overall_accuracy"],
+    }
+
+
+# Use the Trainer class to fine-tune the model
+training_args = TrainingArguments(
+    output_dir="./results",
+    evaluation_strategy="epoch",
+    learning_rate=2e-5,
+    per_device_train_batch_size=16,
+    per_device_eval_batch_size=16,
+    num_train_epochs=3,
+    weight_decay=0.01,
+)
+
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized_wnut["train"],
+    eval_dataset=tokenized_wnut["test"],
+    tokenizer=tokenizer,
+    data_collator=data_collator,
+    compute_metrics=compute_metrics
+)
+
+trainer.train()
+trainer.evaluate()
+
+predictions, labels, _ = trainer.predict(tokenized_wnut["validation"])
+predictions = np.argmax(predictions, axis=2)
+
+# Remove ignored index (special tokens)
+true_predictions = [
+    [label_list[p] for (p, l) in zip(prediction, label) if l != -100]
+    for prediction, label in zip(predictions, labels)
+]
+true_labels = [
+    [label_list[l] for (p, l) in zip(prediction, label) if l != -100]
+    for prediction, label in zip(predictions, labels)
+]
+
+results = metric.compute(predictions=true_predictions, references=true_labels)
+print(results)
