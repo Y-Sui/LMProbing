@@ -34,6 +34,7 @@ parser.add_argument("--no_cuda", action="store_true", help="Whether not to use C
 parser.add_argument("--epochs", default=3, type=int)
 parser.add_argument("--max_length", default=50, type=int, help="Max length of the tokenization")
 parser.add_argument("--num_workers", default=0, type=int)
+parser.add_argument("--lr", default=0.0001, type=int)
 args = parser.parse_args()
 
 # Setup devices (No distributed training here)
@@ -44,10 +45,12 @@ def train(model, train_loader, label_list, mode="layer-wise", epochs=args.epochs
     model.to(device)
     criterion = nn.CrossEntropyLoss(ignore_index=-100) # remove specical token
     optimizer = torch.optim.Adam(
-        filter(lambda p:p.requires_grad, model.parameters()) # only update the fc parameters (classifier)
+        filter(lambda p:p.requires_grad, model.parameters()), # only update the fc parameters (classifier)
+        lr=args.lr,
     )
     loop_size = len(model.hidden_states) if mode == "layer-wise" else model.num_heads
     for i in range(loop_size): # i refers to head or layer
+        optimizer.zero_grad() # make sure each layer's optimizer set to zero grad
         for epoch in tqdm(range(1, epochs + 1)):
             for idx, example_batched in enumerate(train_loader):
                 optimizer.zero_grad()
@@ -93,7 +96,6 @@ def eval(model, eval_loader, label_list, mode="layer-wise", device=args.device):
                 # glue_metric.add_batch(preds, labels)
                 metric.add_batch(predictions=true_predictions, references=true_labels)
             results = metric.compute()
-            print(results)
             final_score.append(results)
     with open(output_path + "bert_classification_layer_wise_logging.txt", "w") as file:
         for i in range(len(final_score)):
@@ -115,8 +117,8 @@ def main():
     wnut_label_list = construct_data_loader(batch_size=args.batch_size,
                                             shuffle=True if not args.no_shuffle else True,
                                             num_workers=args.num_workers)
-    train(model_layer_wise, wnut_train_dataloader, wnut_label_list, mode="layer-wise")
-    eval(model_layer_wise, wnut_eval_dataloader, wnut_label_list, mode="layer-wise")
+    # train(model_layer_wise, wnut_train_dataloader, wnut_label_list, mode="layer-wise")
+    # eval(model_layer_wise, wnut_eval_dataloader, wnut_label_list, mode="layer-wise")
     train(model_head_wise, wnut_train_dataloader, wnut_label_list, mode="head-wise")
     eval(model_head_wise, wnut_eval_dataloader, wnut_label_list, mode="head-wise")
 
