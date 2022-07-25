@@ -52,26 +52,3 @@ def construct_data_loader(batch_size, shuffle=True, num_workers=0):
            wnut_eval_dataloader, \
            wnut_test_dataloader, \
            label_list
-
-# # wnut = load_dataset_huggingface("wnut_17")
-# # wnut = wnut.map(tokenize_and_align_labels, batched=True)
-# # wnut.set_format(type='torch', columns=['input_ids', 'attention_mask', 'labels'])
-
-# # wnut_train = wnut['train']
-# # print(wnut_train[0])
-# # print(wnut_train[1])
-
-# # dataloader = torch.utils.data.DataLoader(wnut_train, batch_size=32)
-# # print(next(iter(dataloader)))
-
-
-# wnut_train_dataloader, \
-# wnut_eval_dataloader, \
-# wnut_test_dataloader, \
-# wnut_label_list = construct_data_loader(batch_size=16, shuffle=True)
-
-# for example_batched in wnut_eval_dataloader:
-#     input_ids = example_batched["input_ids"]
-#     attention_mask = example_batched["attention_mask"]
-#     labels = example_batched["labels"]
-#     print(input_ids, attention_mask, labels)
