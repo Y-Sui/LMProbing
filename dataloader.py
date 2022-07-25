@@ -17,7 +17,7 @@ def tokenization(example):
 
 def tokenize_and_align_labels(example):
 
-    tokenized_inputs = tokenizer(example["tokens"], truncation=True, is_split_into_words=True, padding=True)
+    tokenized_inputs = tokenizer(example["tokens"], truncation=True, is_split_into_words=True, padding="max_length", max_length=50) # is_split_into_words=True, Whether or not the input is already pre-tokenized (e.g., split into words)
     labels = []
     for i, label in enumerate(example[f"{TASK}_tags"]):
         word_ids = tokenized_inputs.word_ids(batch_index=i)  # Map tokens to their respective word.
@@ -39,10 +39,9 @@ def tokenize_and_align_labels(example):
 
 def construct_data_loader(batch_size, shuffle=True, num_workers=0):
     wnut = load_dataset_huggingface("wnut_17")
-    wnut = wnut.map(tokenize_and_align_labels, batched=True, num_proc=num_workers)
+    wnut = wnut.map(tokenize_and_align_labels, batched=True)
     # Set the format of your dataset to be compatible with your machine learning framework:
-    wnut.set_format(type="torch",
-                    columns=["input_ids", "token_type_ids", "attention_mask", "labels"])
+    wnut.set_format(type='torch', columns=['input_ids', 'attention_mask', 'labels'])
     wnut_train_set, wnut_eval_set, wnut_test_set = wnut["train"], wnut["validation"], wnut["test"]
     wnut_train_dataloader = DataLoader(wnut_train_set, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
     wnut_eval_dataloader = DataLoader(wnut_eval_set, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
@@ -54,3 +53,25 @@ def construct_data_loader(batch_size, shuffle=True, num_workers=0):
            wnut_test_dataloader, \
            label_list
 
+# # wnut = load_dataset_huggingface("wnut_17")
+# # wnut = wnut.map(tokenize_and_align_labels, batched=True)
+# # wnut.set_format(type='torch', columns=['input_ids', 'attention_mask', 'labels'])
+
+# # wnut_train = wnut['train']
+# # print(wnut_train[0])
+# # print(wnut_train[1])
+
+# # dataloader = torch.utils.data.DataLoader(wnut_train, batch_size=32)
+# # print(next(iter(dataloader)))
+
+
+# wnut_train_dataloader, \
+# wnut_eval_dataloader, \
+# wnut_test_dataloader, \
+# wnut_label_list = construct_data_loader(batch_size=16, shuffle=True)
+
+# for example_batched in wnut_eval_dataloader:
+#     input_ids = example_batched["input_ids"]
+#     attention_mask = example_batched["attention_mask"]
+#     labels = example_batched["labels"]
+#     print(input_ids, attention_mask, labels)

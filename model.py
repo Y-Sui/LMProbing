@@ -17,6 +17,7 @@ class Bert_4_Classification_Layer_Wise(nn.Module):
             nn.Linear(embed_size, num_labels)
         )
 
+
     def forward(self, input_ids, attention_mask):
         backbone = self.backbone(input_ids=input_ids,
                                  attention_mask=attention_mask,
