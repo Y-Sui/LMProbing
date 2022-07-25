@@ -117,8 +117,10 @@ def main():
     wnut_label_list = construct_data_loader(batch_size=args.batch_size,
                                             shuffle=True if not args.no_shuffle else True,
                                             num_workers=args.num_workers)
-    # train(model_layer_wise, wnut_train_dataloader, wnut_label_list, mode="layer-wise")
-    # eval(model_layer_wise, wnut_eval_dataloader, wnut_label_list, mode="layer-wise")
+    print("Start training for Layer-wise")
+    train(model_layer_wise, wnut_train_dataloader, wnut_label_list, mode="layer-wise")
+    eval(model_layer_wise, wnut_eval_dataloader, wnut_label_list, mode="layer-wise")
+    print("Start training for Head-wise")
     train(model_head_wise, wnut_train_dataloader, wnut_label_list, mode="head-wise")
     eval(model_head_wise, wnut_eval_dataloader, wnut_label_list, mode="head-wise")
 
