@@ -59,7 +59,7 @@ def train(model, train_loader, label_list, mode="layer-wise", epochs=args.epochs
                 labels = example_batched["labels"].to(device)
                 outputs = model(input_ids, attention_mask)
                 logits = outputs[i]
-                preds = logits.permute(0,2,1) # adapt to the nn.crossentropy, inputs = [batch_size, nb_classes, *additional_dims]; target in the shape [batch_size, *additional_dims]
+                preds = logits.permute(0,2,1).to(device) # adapt to the nn.crossentropy, inputs = [batch_size, nb_classes, *additional_dims]; target in the shape [batch_size, *additional_dims]
                 loss = criterion(preds, labels)
                 loss.backward()
                 optimizer.step()
