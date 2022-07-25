@@ -39,7 +39,7 @@ def tokenize_and_align_labels(example):
 
 def construct_data_loader(batch_size, shuffle=True, num_workers=0):
     wnut = load_dataset_huggingface("wnut_17")
-    wnut = wnut.map(tokenize_and_align_labels, batched=True)
+    wnut = wnut.map(tokenize_and_align_labels, batched=True, num_proc=num_workers)
     # Set the format of your dataset to be compatible with your machine learning framework:
     wnut.set_format(type="torch",
                     columns=["input_ids", "token_type_ids", "attention_mask", "labels"])
