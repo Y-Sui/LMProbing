@@ -17,7 +17,6 @@ class Bert_4_Classification_Layer_Wise(nn.Module):
             nn.Linear(embed_size, num_labels)
         )
 
-
     def forward(self, input_ids, attention_mask):
         backbone = self.backbone(input_ids=input_ids,
                                  attention_mask=attention_mask,
@@ -55,7 +54,7 @@ class Bert_4_Classification_Head_Wise(nn.Module):
             head_mask_n = head_mask[:]
             head_mask_n[i] = 1
             head_mask_list.append(head_mask_n)
-        head_mask_list = torch.tensor(head_mask_list)
+        head_mask_list = torch.tensor(head_mask_list).to('cuda') # add cuda to make sure the tensors on the same device
         heads = torch.rand(self.num_heads, attention_mask.shape[0], attention_mask.shape[1], 2)
         for head_idx in range(len(head_mask_list)):
             backbone = self.backbone(input_ids=input_ids,
