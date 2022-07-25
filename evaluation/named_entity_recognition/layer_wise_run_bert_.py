@@ -113,7 +113,7 @@ def test(layer, eval_dataloader, model, tokenizer, max_length, device):
             #     model_predictions.append(0) if predictions[i][0] > predictions[i][1] else model_predictions.append(1)
             glue_metric.add_batch(predictions=predictions, references=targets)
         final_score = glue_metric.compute()
-        with open("../../output/" + "bert_classification_layer_wise_final_score.txt", "a") as file:
+        with open("../../output/" + "sst2_layer.txt", "a") as file:
             file.write(f"Accuracy of the layer_{layer} is {final_score}" + "\n")
 
 def main():
