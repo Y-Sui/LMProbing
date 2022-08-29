@@ -36,6 +36,7 @@ class Bert_4_Classification_Head_Wise(nn.Module):
 
     def __init__(self, ptm="bert-base-uncased", embed_size=256, num_labels=2):
         super(Bert_4_Classification_Head_Wise, self).__init__()
+        self.num_labels = num_labels
         self.backbone = AutoModel.from_pretrained(ptm)
         self.num_heads = self.backbone.config.num_attention_heads
         for p in self.backbone.parameters():
@@ -55,7 +56,7 @@ class Bert_4_Classification_Head_Wise(nn.Module):
             head_mask_n[i] = 1
             head_mask_list.append(head_mask_n)
         head_mask_list = torch.tensor(head_mask_list).to('cuda') # add cuda to make sure the tensors on the same device
-        heads = torch.rand(self.num_heads, attention_mask.shape[0], attention_mask.shape[1], self.num_heads+1)
+        heads = torch.rand(self.num_heads, attention_mask.shape[0], attention_mask.shape[1], self.num_labels)
         for head_idx in range(len(head_mask_list)):
             backbone = self.backbone(input_ids=input_ids,
                                      attention_mask=attention_mask,

@@ -8,17 +8,11 @@ from tqdm import tqdm
 from model import Bert_4_Classification_Head_Wise, Bert_4_Classification_Layer_Wise
 from dataloader import *
 
-layer_wise_path = "output/bert_classification_layer_wise/"
-head_wise_path = "output/bert_classification_head_wise/"
-
-if not os.path.exists(layer_wise_path):
-    os.mkdir(layer_wise_path)
-if not os.path.exists(head_wise_path):
-    os.mkdir(head_wise_path)
-
+os.environ["CUDA_VISIBLE_DEVICES"]="1" # set the cuda card 5
 
 # Required parameters
 parser = argparse.ArgumentParser()
+parser.add_argument("--task", default="ner", type=str, help="Please specify the task name {NER or Chunk}")
 parser.add_argument("--dataset", default="SST2", type=str, help="The dataset name, the options can be sst, SST2, etc")
 parser.add_argument("--model_name_or_path", default="bert-base-uncased", type=str, help="Path to save the pretrained model")
 parser.add_argument("--embed_size", default=256, type=int)
@@ -31,14 +25,23 @@ parser.add_argument("--batch_size", default=8, type=int, help="Batch size.")
 parser.add_argument("--no_shuffle", action="store_true", help="Whether not to shuffle the dataloader")
 parser.add_argument("--seed", type=int, default=42)
 parser.add_argument("--no_cuda", action="store_true", help="Whether not to use CUDA when available")
-parser.add_argument("--epochs", default=3, type=int)
+parser.add_argument("--epochs", default=15, type=int)
 parser.add_argument("--max_length", default=50, type=int, help="Max length of the tokenization")
 parser.add_argument("--num_workers", default=0, type=int)
 parser.add_argument("--lr", default=0.0001, type=int)
 args = parser.parse_args()
 
+layer_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_layer_wise/" + args.task + "/"
+head_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_head_wise/" + args.task + "/"
+
+if not os.path.exists(layer_wise_path):
+    os.mkdir(layer_wise_path)
+if not os.path.exists(head_wise_path):
+    os.mkdir(head_wise_path)
+
 # Setup devices (No distributed training here)
 args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
+# args.device = "cpu"
 
 
 def train(model, train_loader, label_list, mode="layer-wise", epochs=args.epochs, device=args.device):
@@ -66,15 +69,16 @@ def train(model, train_loader, label_list, mode="layer-wise", epochs=args.epochs
                 if idx % 30 == 0:
                     print(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
         output_path = layer_wise_path if mode == "layer-wise" else head_wise_path
-        torch.save(model, output_path + f"bert_classification_{i}.bin")
+        torch.save(model.state_dict(), output_path + f"bert_classification_{i}.pt")
 
 def eval(model, eval_loader, label_list, mode="layer-wise", device=args.device):
-    model.to(device)
     loop_size = len(model.hidden_states) if mode == "layer-wise" else model.num_heads
     output_path = layer_wise_path if mode == "layer-wise" else head_wise_path
     final_score = []
     with torch.no_grad():
         for i in range(loop_size):  # i refers to head or layer
+            model.load_state_dict(torch.load(output_path + f"bert_classification_{i}.pt"))
+            model.to(device)
             # glue_metric = datasets.load_metric('glue')
             metric = load_metric("seqeval")
             for example_batched in tqdm(eval_loader):
@@ -108,21 +112,21 @@ def eval(model, eval_loader, label_list, mode="layer-wise", device=args.device):
 
 
 def main():
-    # load the model
-    model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=13)
-    model_head_wise = Bert_4_Classification_Head_Wise(num_labels=13)
-    wnut_train_dataloader, \
-    wnut_eval_dataloader, \
-    wnut_test_dataloader, \
-    wnut_label_list = construct_data_loader(batch_size=args.batch_size,
+    # set the data loader
+    probing_train_dataloader, \
+    probing_eval_dataloader, \
+    probing_label_list = construct_data_loader(batch_size=args.batch_size, dataset=args.task,
                                             shuffle=True if not args.no_shuffle else True,
                                             num_workers=args.num_workers)
-    print("Start training for Layer-wise")
-    train(model_layer_wise, wnut_train_dataloader, wnut_label_list, mode="layer-wise")
-    eval(model_layer_wise, wnut_eval_dataloader, wnut_label_list, mode="layer-wise")
+    # load the model
+    model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
+    model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
+    #print("Start training for Layer-wise")
+    #train(model_layer_wise, probing_train_dataloader, probing_label_list, mode="layer-wise")
+    #eval(model_layer_wise, probing_eval_dataloader, probing_label_list, mode="layer-wise")
     print("Start training for Head-wise")
-    train(model_head_wise, wnut_train_dataloader, wnut_label_list, mode="head-wise")
-    eval(model_head_wise, wnut_eval_dataloader, wnut_label_list, mode="head-wise")
+    train(model_head_wise, probing_train_dataloader, probing_label_list, mode="head-wise")
+    eval(model_head_wise, probing_eval_dataloader, probing_label_list, mode="head-wise")
 
 if __name__ == "__main__":
     main()

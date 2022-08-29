@@ -1,10 +1,10 @@
 from transformers import AutoTokenizer
-from torch.utils.data import DataLoader, Dataset
-from torchvision import transforms
+from torch.utils.data import DataLoader
 from datasets import load_dataset
 import torch
+from run import args
 
-TASK = "ner"
+TASK = args.task
 ptm="bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(ptm)
 
@@ -12,11 +12,14 @@ def load_dataset_huggingface(dataset_name="wnut_17"):
     dataset = load_dataset(dataset_name)
     return dataset
 
+def load_dataset_json(filePath="ner"):
+    dataset = load_dataset("json", data_files={"train": f"dataset/{filePath}_train.json", "validation": f"dataset/{filePath}_eval.json"}, field= "data")
+    return dataset
+
 def tokenization(example):
     return tokenizer(example["tokens"])
 
 def tokenize_and_align_labels(example):
-
     tokenized_inputs = tokenizer(example["tokens"], truncation=True, is_split_into_words=True, padding="max_length", max_length=50) # is_split_into_words=True, Whether or not the input is already pre-tokenized (e.g., split into words)
     labels = []
     for i, label in enumerate(example[f"{TASK}_tags"]):
@@ -37,7 +40,10 @@ def tokenize_and_align_labels(example):
 
     return  tokenized_inputs
 
-def construct_data_loader(batch_size, shuffle=True, num_workers=0):
+def construct_data_loader_huggingface(batch_size, shuffle=True, num_workers=0):
+    """
+    construct dataloader from huggingface
+    """
     wnut = load_dataset_huggingface("wnut_17")
     wnut = wnut.map(tokenize_and_align_labels, batched=True)
     # Set the format of your dataset to be compatible with your machine learning framework:
@@ -52,3 +58,34 @@ def construct_data_loader(batch_size, shuffle=True, num_workers=0):
            wnut_eval_dataloader, \
            wnut_test_dataloader, \
            label_list
+
+
+def construct_data_loader(batch_size, dataset="ner", shuffle=True, num_workers=0):
+    """
+    construct dataloader from custom dataset
+    """
+    probing_dataset = load_dataset_json(dataset)
+    probing_dataset = probing_dataset.map(tokenize_and_align_labels, batched=True)
+
+    # Set the format of your dataset to be compatible with your machine learning framework:
+    probing_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'labels'])
+    probing_train_set, probing_eval_set = probing_dataset["train"], probing_dataset["validation"]
+    probing_train_dataloader = DataLoader(probing_train_set, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+    probing_eval_dataloader = DataLoader(probing_eval_set, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+
+    # Load the label_list
+    if dataset == "ner":
+        tag_dict = {"O": 0, "B-ORG": 1, "I-ORG": 2, "B-PER": 3, "I-PER": 4, "B-MISC": 5, "I-MISC": 6, "B-LOC": 7,
+                    "I-LOC": 8}
+    elif dataset == "chunk":
+        tag_dict = {"O": 0, "B-ADJP": 1, "I-ADJP": 2, "B-ADVP": 3, "I-ADVP": 4, "B-CONJP": 5, "I-CONJP": 6, "B-INTJ": 7,
+                    "I-INTJ": 8, "B-LST": 9, "I-LST": 10, "B-NP": 11, "I-NP": 12, "B-PP": 13, "I-PP": 14, "B-PRT": 15, "I-PRT": 16,
+                    "B-SBAR": 17, "I-SBAR": 18, "B-VP": 19, "I-VP": 20}
+    else:
+        tag_dict = {}
+
+    return probing_train_dataloader, probing_eval_dataloader, list(tag_dict.keys())
+
+# if __name__ == "__main__":
+#     a, b, c = construct_data_loader(2)
+#     print(c)
