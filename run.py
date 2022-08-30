@@ -94,7 +94,7 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
     final_score = []
     with torch.no_grad():
         for i in range(loop_size):  # i refers to head or layer
-            model.load_state_dict(torch.load(output_path + f"bert_classification_{i}.pt"))
+            # model.load_state_dict(torch.load(output_path + f"bert_classification_{i}.pt"))
             model.to(device)
             # glue_metric = datasets.load_metric('glue')
             metric = load_metric("seqeval")
