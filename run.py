@@ -125,7 +125,7 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
                        f"Recall, {final_score[i]['overall_recall']}, "
                        f"F1, {final_score[i]['overall_f1']}, "
                        f"Accuracy, {final_score[i]['overall_accuracy']}" + "\n")
-    print(f"{mode} {i} on {file_path} has been evaluated..")
+            print(f"{mode} {i} on {file_path} has been evaluated..")
 
 
 def main():
