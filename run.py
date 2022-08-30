@@ -11,7 +11,7 @@ from dataloader import *
 # Required parameters
 parser = argparse.ArgumentParser()
 parser.add_argument("--task", default="ner", type=str, help="Please specify the task name {NER or Chunk}")
-parser.add_argument("--dataset", default="SST2", type=str, help="The dataset name, the options can be sst, SST2, etc")
+# parser.add_argument("--dataset", default="SST2", type=str, help="The dataset name, the options can be sst, SST2, etc")
 parser.add_argument("--model_name_or_path", default="bert-base-uncased", type=str, help="Path to save the pretrained model")
 parser.add_argument("--embed_size", default=256, type=int)
 parser.add_argument("--label_size", default=2, type=int, help="classification task: the number of the label classes")
