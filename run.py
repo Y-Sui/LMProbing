@@ -8,8 +8,6 @@ from tqdm import tqdm
 from model import Bert_4_Classification_Head_Wise, Bert_4_Classification_Layer_Wise
 from dataloader import *
 
-os.environ["CUDA_VISIBLE_DEVICES"]="1" # set the cuda card 5
-
 # Required parameters
 parser = argparse.ArgumentParser()
 parser.add_argument("--task", default="ner", type=str, help="Please specify the task name {NER or Chunk}")
@@ -31,6 +29,13 @@ parser.add_argument("--num_workers", default=0, type=int)
 parser.add_argument("--lr", default=0.0001, type=int)
 args = parser.parse_args()
 
+# Setup devices (No distributed training here)
+args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
+
+# set the cuda card 5
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
+
+# set the save path
 layer_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_layer_wise/" + args.task + "/"
 head_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_head_wise/" + args.task + "/"
 
@@ -39,12 +44,21 @@ if not os.path.exists(layer_wise_path):
 if not os.path.exists(head_wise_path):
     os.mkdir(head_wise_path)
 
-# Setup devices (No distributed training here)
-args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-# args.device = "cpu"
+def get_files_path(filePath):
+    """
+    return the file list
+    """
+    raw_files = os.listdir(filePath)
+    file_paths = []
+    for i in range(len(raw_files)):
+        if raw_files[i].find("train") == -1 and raw_files[i].find("eval") == -1:
+            file_paths.append(raw_files[i].replace(".csv", ""))
+        # else:
+        #     raw_files.pop(i)  # remove the elements
+    return file_paths
 
 
-def train(model, train_loader, label_list, mode="layer-wise", epochs=args.epochs, device=args.device):
+def train(model, train_loader, eval_loader, label_list, file_path, mode="layer-wise", epochs=args.epochs, device=args.device):
     model.to(device)
     criterion = nn.CrossEntropyLoss(ignore_index=-100) # remove specical token
     optimizer = torch.optim.Adam(
@@ -68,10 +82,13 @@ def train(model, train_loader, label_list, mode="layer-wise", epochs=args.epochs
                 optimizer.step()
                 if idx % 30 == 0:
                     print(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
-        output_path = layer_wise_path if mode == "layer-wise" else head_wise_path
-        torch.save(model.state_dict(), output_path + f"bert_classification_{i}.pt")
+        # output_path = layer_wise_path if mode == "layer-wise" else head_wise_path
+        # torch.save(model.state_dict(), output_path + f"bert_classification_{i}.pt")
+        print(f"{mode} {i} on {file_path} has been trained..")
+        print(f"start to evaluate the model.. ")
+        eval(model, eval_loader, label_list, file_path, mode, device)
 
-def eval(model, eval_loader, label_list, mode="layer-wise", device=args.device):
+def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=args.device):
     loop_size = len(model.hidden_states) if mode == "layer-wise" else model.num_heads
     output_path = layer_wise_path if mode == "layer-wise" else head_wise_path
     final_score = []
@@ -101,32 +118,33 @@ def eval(model, eval_loader, label_list, mode="layer-wise", device=args.device):
                 metric.add_batch(predictions=true_predictions, references=true_labels)
             results = metric.compute()
             final_score.append(results)
-    with open(output_path + "bert_classification_layer_wise_logging.txt", "w") as file:
+    with open(output_path + f"layer_wise_{file_path}.txt", "w") as file:
         for i in range(len(final_score)):
             file.write(f"Performance of the {i}th is: "
                        f"precision, {final_score[i]['overall_precision']}, "
                        f"Recall, {final_score[i]['overall_recall']}, "
                        f"F1, {final_score[i]['overall_f1']}, "
                        f"Accuracy, {final_score[i]['overall_accuracy']}" + "\n")
-
+    print(f"{mode} {i} on {file_path} has been evaluated..")
 
 
 def main():
-    # set the data loader
-    probing_train_dataloader, \
-    probing_eval_dataloader, \
-    probing_label_list = construct_data_loader(batch_size=args.batch_size, dataset=args.task,
-                                            shuffle=True if not args.no_shuffle else True,
-                                            num_workers=args.num_workers)
-    # load the model
-    model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
-    model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
-    #print("Start training for Layer-wise")
-    #train(model_layer_wise, probing_train_dataloader, probing_label_list, mode="layer-wise")
-    #eval(model_layer_wise, probing_eval_dataloader, probing_label_list, mode="layer-wise")
-    print("Start training for Head-wise")
-    train(model_head_wise, probing_train_dataloader, probing_label_list, mode="head-wise")
-    eval(model_head_wise, probing_eval_dataloader, probing_label_list, mode="head-wise")
+    filePath = get_files_path(args.task)
+    print(filePath)
+    for i in range(len(filePath)):
+        # set the data loader
+        probing_train_dataloader, \
+        probing_eval_dataloader, \
+        probing_label_list = construct_data_loader(batch_size=args.batch_size, dataset=args.task, filePath=filePath[i],
+                                                shuffle=True if not args.no_shuffle else True,
+                                                num_workers=args.num_workers)
+        # load the model
+        model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
+        model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
+        print("Start training for Layer-wise")
+        train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath, mode="layer-wise")
+        print("Start training for Head-wise")
+        train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath, mode="head-wise")
 
 if __name__ == "__main__":
     main()
