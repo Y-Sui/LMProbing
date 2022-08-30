@@ -11,12 +11,10 @@ def get_files_path(filePath):
         raw_files[i] = filePath + "/" + raw_files[i]
     return raw_files
 
-
 def concat_files(nerPath="./ner", chunkPath="./chunk"):
     ner_files = get_files_path(nerPath)
     chunk_files = get_files_path(chunkPath)
     return ner_files + chunk_files
-
 
 def get_pure_tokens(tokenList):
     tokens = []
@@ -55,7 +53,6 @@ def get_tags(tagList, flag="ner"):
             if isinstance(tagList[i][j], str) and tagList[i][j].__contains__("X-"):
                 tagList[i][j] = tagList[i][j-1]
     return tagList
-
 
 def data_split(full_list, ratio, shuffle=False):
     n_total = len(full_list)
