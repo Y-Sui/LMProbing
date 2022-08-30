@@ -26,7 +26,7 @@ parser.add_argument("--no_cuda", action="store_true", help="Whether not to use C
 parser.add_argument("--epochs", default=15, type=int)
 parser.add_argument("--max_length", default=50, type=int, help="Max length of the tokenization")
 parser.add_argument("--num_workers", default=0, type=int)
-parser.add_argument("--lr", default=0.0001, type=int)
+parser.add_argument("--lr", default=0.0001, type=float)
 args = parser.parse_args()
 
 # Setup devices (No distributed training here)
