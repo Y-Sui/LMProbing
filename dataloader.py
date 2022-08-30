@@ -13,7 +13,13 @@ def load_dataset_huggingface(dataset_name="wnut_17"):
     return dataset
 
 def load_dataset_json(filePath="ner"):
-    dataset = load_dataset("json", data_files={"train": f"dataset/{filePath}_train.json", "validation": f"dataset/{filePath}_eval.json"}, field= "data")
+    dataset = load_dataset("json", data_files={"train": f"dataset/{filePath}_train.json",
+                                               "valuation": f"dataset/{filePath}_eval.json"}, field="data")
+    return dataset
+
+def load_dataset_single_json(category="ner", filePath="wsj_annotated_ner_LOC"):
+    dataset = load_dataset("json", data_files={"train": f"dataset/{category}/{filePath}_train.json",
+                                               "validation": f"dataset/{category}/{filePath}_eval.json"}, field= "data")
     return dataset
 
 def tokenization(example):
@@ -60,11 +66,12 @@ def construct_data_loader_huggingface(batch_size, shuffle=True, num_workers=0):
            label_list
 
 
-def construct_data_loader(batch_size, dataset="ner", shuffle=True, num_workers=0):
+def construct_data_loader(batch_size, dataset="ner", filePath="wsj_annotated_ner_LOC", shuffle=True, num_workers=0):
     """
     construct dataloader from custom dataset
     """
-    probing_dataset = load_dataset_json(dataset)
+    # probing_dataset = load_dataset_json(dataset) # load mixed-dataset
+    probing_dataset = load_dataset_single_json(dataset, filePath) # load single dataset
     probing_dataset = probing_dataset.map(tokenize_and_align_labels, batched=True)
 
     # Set the format of your dataset to be compatible with your machine learning framework:
