@@ -35,14 +35,14 @@ args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_c
 # set the cuda card 5
 os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
-# # set the save path
-# layer_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_layer_wise/" + args.task + "/"
-# head_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_head_wise/" + args.task + "/"
-#
-# if not os.path.exists(layer_wise_path):
-#     os.mkdir(layer_wise_path)
-# if not os.path.exists(head_wise_path):
-#     os.mkdir(head_wise_path)
+# set the save path
+layer_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_layer_wise/" + args.task + "/"
+head_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_head_wise/" + args.task + "/"
+
+if not os.path.exists(layer_wise_path):
+    os.mkdir(layer_wise_path)
+if not os.path.exists(head_wise_path):
+    os.mkdir(head_wise_path)
 
 def get_files_path(filePath):
     """
@@ -130,7 +130,6 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
 
 def main():
     filePath = get_files_path(f"./dataset/{args.task}")
-    print(filePath)
     for i in range(len(filePath)):
         # set the data loader
         probing_train_dataloader, \
@@ -141,9 +140,9 @@ def main():
         # load the model
         model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
         model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
-        print("Start training for Layer-wise")
+        print(f"Start training for Layer-wise on {args.task}")
         train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath, mode="layer-wise")
-        print("Start training for Head-wise")
+        print(f"Start training for Head-wise on {args.task}")
         train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath, mode="head-wise")
 
 if __name__ == "__main__":
