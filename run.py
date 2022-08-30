@@ -141,9 +141,9 @@ def main():
         model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
         model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
         print(f"Start training for Layer-wise on {args.task}")
-        train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath, mode="layer-wise")
+        train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i], mode="layer-wise")
         print(f"Start training for Head-wise on {args.task}")
-        train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath, mode="head-wise")
+        train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i], mode="head-wise")
 
 if __name__ == "__main__":
     main()
