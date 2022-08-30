@@ -80,16 +80,22 @@ def construct_data_loader(batch_size, dataset="ner", filePath="wsj_annotated_ner
     probing_train_dataloader = DataLoader(probing_train_set, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
     probing_eval_dataloader = DataLoader(probing_eval_set, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
-    # Load the label_list
-    if dataset == "ner":
-        tag_dict = {"O": 0, "B-ORG": 1, "I-ORG": 2, "B-PER": 3, "I-PER": 4, "B-MISC": 5, "I-MISC": 6, "B-LOC": 7,
-                    "I-LOC": 8}
-    elif dataset == "chunk":
-        tag_dict = {"O": 0, "B-ADJP": 1, "I-ADJP": 2, "B-ADVP": 3, "I-ADVP": 4, "B-CONJP": 5, "I-CONJP": 6, "B-INTJ": 7,
-                    "I-INTJ": 8, "B-LST": 9, "I-LST": 10, "B-NP": 11, "I-NP": 12, "B-PP": 13, "I-PP": 14, "B-PRT": 15, "I-PRT": 16,
-                    "B-SBAR": 17, "I-SBAR": 18, "B-VP": 19, "I-VP": 20}
-    else:
-        tag_dict = {}
+    # Load the label_list (mixed version)
+    # if dataset == "ner":
+    #     tag_dict = {"O": 0, "B-ORG": 1, "I-ORG": 2, "B-PER": 3, "I-PER": 4, "B-MISC": 5, "I-MISC": 6, "B-LOC": 7,
+    #                 "I-LOC": 8}
+    # elif dataset == "chunk":
+    #     tag_dict = {"O": 0, "B-ADJP": 1, "I-ADJP": 2, "B-ADVP": 3, "I-ADVP": 4, "B-CONJP": 5, "I-CONJP": 6, "B-INTJ": 7,
+    #                 "I-INTJ": 8, "B-LST": 9, "I-LST": 10, "B-NP": 11, "I-NP": 12, "B-PP": 13, "I-PP": 14, "B-PRT": 15, "I-PRT": 16,
+    #                 "B-SBAR": 17, "I-SBAR": 18, "B-VP": 19, "I-VP": 20}
+    # else:
+    #     tag_dict = {}
+
+    # Load the label_list (single samples)
+    category = filePath.split("_")[-1]
+    tag_dict = {"O": 0, f"B-{category}": 1, f"I-{category}": 2}
+    if category.islower():
+        tag_dict = {"O": 0, "B-head": 1, "B-dependent": 2}
 
     return probing_train_dataloader, probing_eval_dataloader, list(tag_dict.keys())
 
