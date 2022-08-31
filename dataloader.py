@@ -14,7 +14,7 @@ def load_dataset_huggingface(dataset_name="wnut_17"):
 
 def load_dataset_json(filePath="ner"):
     dataset = load_dataset("json", data_files={"train": f"dataset/{filePath}_train.json",
-                                               "valuation": f"dataset/{filePath}_eval.json"}, field="data")
+                                               "validation": f"dataset/{filePath}_eval.json"}, field="data")
     return dataset
 
 def load_dataset_single_json(category="ner", filePath="wsj_annotated_ner_LOC"):
