@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from datasets import load_metric
+from matplotlib import pyplot as plt
 from tqdm import tqdm
 from model import Bert_4_Classification_Head_Wise, Bert_4_Classification_Layer_Wise
 from dataloader import *
@@ -156,9 +157,15 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
                        f"Accuracy, {final_score[i]['overall_accuracy']}" + "\n")
             print(f"{mode} {i} on {file_path} has been evaluated..")
         if profile:
-            final_score = np.reshape(final_score, (model.num_heads, len(model.hidden_states)))
-            final_score = pd.DataFrame(final_score, columns=[f"head_{i}" for i in range(model.num_heads)])
-            sns.heatmap(final_score)
+            if mode=="head-wise":
+                final_score = np.reshape(final_score, (model.num_heads, len(model.hidden_states)))
+                final_score = pd.DataFrame(final_score, columns=[f"head_{i}" for i in range(len(final_score))])
+                sns.heatmap(final_score)
+            elif mode=="layer-wise":
+                final_score = pd.DataFrame(final_score, columns=[f"layer_{i}" for i in range(len(final_score))])
+                sns.barplot(x="layer-wise", y="F1", palette="hls", data=final_score)
+            plt.show()
+
 
 
 def main():
