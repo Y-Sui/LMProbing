@@ -60,8 +60,11 @@ class Bert_4_Classification_Head_Wise(nn.Module):
         for head_idx in range(len(head_mask_list)):
             backbone = self.backbone(input_ids=input_ids,
                                      attention_mask=attention_mask,
+                                     output_hidden_states=True,
                                      head_mask=head_mask_list[head_idx])  # Set the head_mask
-            heads[head_idx] = self.classifier(backbone.last_hidden_state)
+            layers = list(backbone.hidden_states)  # save each layer's output
+            for layer_idx in range(len(layers)):
+                heads[head_idx * layer_idx] = self.classifier(layers[layer_idx])
         return heads
 
     def _get_last_hidden_state_size(self):
