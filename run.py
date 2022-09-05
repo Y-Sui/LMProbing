@@ -44,6 +44,9 @@ os.environ["CUDA_VISIBLE_DEVICES"]="1"
 layer_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_layer_wise/" + args.task + "/"
 head_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_head_wise/" + args.task + "/"
 
+# layer_wise_path = "output/bert_classification_layer_wise" + args.task + "/"
+# head_wise_path = "output/bert_classification_head_wise" + args.task + "/"
+
 if not os.path.exists(layer_wise_path):
     os.mkdir(layer_wise_path)
 if not os.path.exists(head_wise_path):
@@ -93,7 +96,7 @@ def train(model, train_loader, eval_loader, label_list, file_path, mode="layer-w
         print(f"start to evaluate the model.. ")
         eval(model, eval_loader, label_list, file_path, mode, device)
 
-def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=args.device, profile=args.proflie):
+def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=args.device, profile=args.profile):
     loop_size = len(model.hidden_states) if mode == "layer-wise" else model.num_heads
     output_path = layer_wise_path if mode == "layer-wise" else head_wise_path
     final_score = []
@@ -123,32 +126,33 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
                     metric.add_batch(predictions=true_predictions, references=true_labels)
                 results = metric.compute()
                 final_score.append(results)
-            else:
-                for i in range(model.num_heads * len(model.hidden_states)):  # i refers to head * layer
-                    model.to(device)
-                    # glue_metric = datasets.load_metric('glue')
-                    metric = load_metric("seqeval")
-                    for example_batched in tqdm(eval_loader):
-                        input_ids = example_batched["input_ids"].to(device)
-                        attention_mask = example_batched["attention_mask"].to(device)
-                        labels = example_batched["labels"].int().to(device)  # use int()
-                        outputs = model(input_ids, attention_mask)
-                        logits = outputs[i]  # CLS
-                        preds = torch.argmax(logits, dim=2).int().to(device)  # use int()
-                        # Remove ignored index (special tokens)
-                        true_predictions = [
-                            [label_list[p] for (p, l) in zip(pred, label) if l != -100]
-                            for pred, label in zip(preds, labels)
-                        ]
-                        true_labels = [
-                            [label_list[l] for (p, l) in zip(pred, label) if l != -100]
-                            for pred, label in zip(preds, labels)
-                        ]
-                        # glue_metric.add_batch(preds, labels)
-                        metric.add_batch(predictions=true_predictions, references=true_labels)
-                    results = metric.compute()
-                    final_score.append(results)
+        else:
+            for i in range(model.num_heads * len(model.hidden_states)):  # i refers to head * layer
+                model.to(device)
+                # glue_metric = datasets.load_metric('glue')
+                metric = load_metric("seqeval")
+                for example_batched in tqdm(eval_loader):
+                    input_ids = example_batched["input_ids"].to(device)
+                    attention_mask = example_batched["attention_mask"].to(device)
+                    labels = example_batched["labels"].int().to(device)  # use int()
+                    outputs = model(input_ids, attention_mask)
+                    logits = outputs[i]  # CLS
+                    preds = torch.argmax(logits, dim=2).int().to(device)  # use int()
+                    # Remove ignored index (special tokens)
+                    true_predictions = [
+                        [label_list[p] for (p, l) in zip(pred, label) if l != -100]
+                        for pred, label in zip(preds, labels)
+                    ]
+                    true_labels = [
+                        [label_list[l] for (p, l) in zip(pred, label) if l != -100]
+                        for pred, label in zip(preds, labels)
+                    ]
+                    # glue_metric.add_batch(preds, labels)
+                    metric.add_batch(predictions=true_predictions, references=true_labels)
+                results = metric.compute()
+                final_score.append(results)
     with open(output_path + f"{mode}_{file_path}.txt", "w") as file:
+        profile_logging = []
         for i in range(len(final_score)):
             file.write(f"Performance of the {i}th is: "
                        f"precision, {final_score[i]['overall_precision']}, "
@@ -156,14 +160,16 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
                        f"F1, {final_score[i]['overall_f1']}, "
                        f"Accuracy, {final_score[i]['overall_accuracy']}" + "\n")
             print(f"{mode} {i} on {file_path} has been evaluated..")
+            # generate the heatmap according to the F1 score
+            profile_logging.append(final_score[i]['overall_f1'])
         if profile:
             if mode=="head-wise":
-                final_score = np.reshape(final_score, (model.num_heads, len(model.hidden_states)))
+                final_score = np.reshape(profile_logging, (model.num_heads, len(model.hidden_states)))
                 final_score = pd.DataFrame(final_score, columns=[f"head_{i}" for i in range(len(final_score))])
                 sns_fig = sns.heatmap(final_score)
             elif mode=="layer-wise":
-                final_score = pd.DataFrame(final_score, columns=[f"layer_{i}" for i in range(len(final_score))])
-                sns_fig = sns.barplot(x="layer-wise", y="F1", palette="hls", data=final_score)
+                x_ = [f"layer_{i}" for i in range(len(model.hidden_states))]
+                sns_fig = sns.barplot(x=x_, y=profile_logging, palette="hls")
             sns_fig.savefig("output.png")
 
 
