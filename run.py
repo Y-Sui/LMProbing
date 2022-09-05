@@ -31,7 +31,7 @@ parser.add_argument("--epochs", default=15, type=int)
 parser.add_argument("--max_length", default=50, type=int, help="Max length of the tokenization")
 parser.add_argument("--num_workers", default=0, type=int)
 parser.add_argument("--lr", default=0.0001, type=float)
-parser.add_argument("--profile", action="store_ture", help="whether to generate the heatmap")
+parser.add_argument("--profile", action="store_true", help="whether to generate the heatmap")
 args = parser.parse_args()
 
 # Setup devices (No distributed training here)
@@ -160,12 +160,11 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
             if mode=="head-wise":
                 final_score = np.reshape(final_score, (model.num_heads, len(model.hidden_states)))
                 final_score = pd.DataFrame(final_score, columns=[f"head_{i}" for i in range(len(final_score))])
-                sns.heatmap(final_score)
+                sns_fig = sns.heatmap(final_score)
             elif mode=="layer-wise":
                 final_score = pd.DataFrame(final_score, columns=[f"layer_{i}" for i in range(len(final_score))])
-                sns.barplot(x="layer-wise", y="F1", palette="hls", data=final_score)
-            plt.show()
-
+                sns_fig = sns.barplot(x="layer-wise", y="F1", palette="hls", data=final_score)
+            sns_fig.savefig("output.png")
 
 
 def main():
