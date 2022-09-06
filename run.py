@@ -79,7 +79,7 @@ def train(model, train_loader, eval_loader, label_list, file_path, mode="layer-w
     final_score = []
     for i in range(loop_size): # i refers to head or layer
         optimizer.zero_grad() # make sure each layer's optimizer set to zero grad
-        for epoch in tqdm(range(1, epochs + 1)):
+        for epoch in range(1, epochs + 1):
             for idx, example_batched in enumerate(train_loader):
                 optimizer.zero_grad()
                 input_ids = example_batched["input_ids"].to(device)
