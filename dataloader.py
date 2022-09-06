@@ -90,7 +90,6 @@ def construct_data_loader(batch_size, dataset="ner", filePath="wsj_annotated_ner
     #                 "B-SBAR": 17, "I-SBAR": 18, "B-VP": 19, "I-VP": 20}
     # else:
     #     tag_dict = {}
-
     # Load the label_list (single samples)
     category = filePath.split("_")[-1]
     tag_dict = {"O": 0, f"B-{category}": 1, f"I-{category}": 2}
