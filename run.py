@@ -102,11 +102,11 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
     final_score = []
     with torch.no_grad():
         if mode == "layer-wise":
-            for i in range(loop_size):  # i refers to head or layer
+            for i in tqdm(range(loop_size)):  # i refers to head or layer
                 model.to(device)
                 # glue_metric = datasets.load_metric('glue')
                 metric = load_metric("seqeval")
-                for example_batched in tqdm(eval_loader):
+                for example_batched in eval_loader:
                     input_ids = example_batched["input_ids"].to(device)
                     attention_mask = example_batched["attention_mask"].to(device)
                     labels = example_batched["labels"].int().to(device) # use int()
@@ -127,11 +127,11 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
                 results = metric.compute()
                 final_score.append(results)
         else:
-            for i in range(model.num_heads * len(model.hidden_states)):  # i refers to head * layer
+            for i in tqdm(range(model.num_heads * len(model.hidden_states))):  # i refers to head * layer
                 model.to(device)
                 # glue_metric = datasets.load_metric('glue')
                 metric = load_metric("seqeval")
-                for example_batched in tqdm(eval_loader):
+                for example_batched in eval_loader:
                     input_ids = example_batched["input_ids"].to(device)
                     attention_mask = example_batched["attention_mask"].to(device)
                     labels = example_batched["labels"].int().to(device)  # use int()
