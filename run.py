@@ -151,6 +151,7 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
                     metric.add_batch(predictions=true_predictions, references=true_labels)
                 results = metric.compute()
                 final_score.append(results)
+        print(f"{mode} on {file_path} has been evaluated..")
     with open(output_path + f"{mode}_{file_path}.txt", "w") as file:
         profile_logging = []
         for i in range(len(final_score)):
@@ -159,7 +160,6 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
                        f"Recall, {final_score[i]['overall_recall']}, "
                        f"F1, {final_score[i]['overall_f1']}, "
                        f"Accuracy, {final_score[i]['overall_accuracy']}" + "\n")
-            print(f"{mode} {i} on {file_path} has been evaluated..")
             # generate the heatmap according to the F1 score
             profile_logging.append(final_score[i]['overall_f1'])
         if profile:
