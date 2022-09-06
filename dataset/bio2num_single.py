@@ -28,6 +28,14 @@ def get_pure_tokens(tokenList, category):
     filter = ["O-", "X-", f"B-{category}-", f"I-{category}-"]
     if category.islower():
         filter = ["O-", "X-", "B-head-", "B-dependent-"]
+    if category == "VP":
+        filter = ["O-", "X-", "B-ADVP-", "I-ADVP-", "B-VP-", "I-VP-"]
+    if category == "":
+        filter = ["O-", "X-", "B-:-", "I-:-"]
+    if category == "EX":
+        filter = ["O-", "X-", "B-E", "I-E"]
+    if category == "TO":
+        filter = ["O-", "X-", "B-T", "I-T"]
     tokens = []
     for i in range(len(tokenList)):
         for j in range(len(filter)):
@@ -70,6 +78,14 @@ def get_single_tags(tagList, category="LOC"):
     tag_dict = {"O": 0, f"B-{category}": 1, f"I-{category}": 2}
     if category.islower():
         tag_dict = {"O": 0, "B-head": 1, "B-dependent": 2}
+    if category == "VP":
+        tag_dict = {"O": 0, "B-ADVP": 1, "I-ADVP": 2, "B-VP":3, "I-VP": 4}
+    if category == "":
+        tag_dict = {"O": 0, "B-:": 1, "I-:": 2}
+    if category == "EX":
+        tag_dict = {"O": 0, "B-E:": 1, "I-E:": 2}
+    if category == "TO":
+        tag_dict = {"O": 0, "B-T:": 1, "I-T:": 2}
     tag_keys = list(tag_dict.keys())
     for i in range(len(tagList)):
         tagList[i] = tagList[i].split()
