@@ -171,7 +171,7 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
             elif mode=="layer-wise":
                 x_ = [f"layer_{i}" for i in range(len(model.hidden_states))]
                 sns_fig = sns.barplot(x=x_, y=profile_logging, palette="hls")
-            plt.savefig(f"{mode}_{file_path}_map.png")
+            plt.savefig(f"output/{mode}_{file_path}_map.png")
 
 
 def main():
