@@ -1,6 +1,6 @@
 import os
 # set the cuda card 5
-os.environ["CUDA_VISIBLE_DEVICES"]= "4"
+# os.environ["CUDA_VISIBLE_DEVICES"]= "4"
 
 
 import argparse
