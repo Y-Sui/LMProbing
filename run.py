@@ -38,7 +38,7 @@ args = parser.parse_args()
 args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
 
 # set the cuda card 5
-os.environ["CUDA_VISIBLE_DEVICES"]="1"
+os.environ["CUDA_VISIBLE_DEVICES"]="5"
 
 # set the save path
 layer_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_layer_wise/" + args.task + "/"
