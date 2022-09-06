@@ -123,6 +123,7 @@ def train(model, train_loader, eval_loader, label_list, file_path, mode="layer-w
             x_ = [f"layer_{i}" for i in range(len(model.hidden_states))]
             sns_fig = sns.barplot(x=x_, y=profile_logging, palette="hls")
         plt.savefig(f"./output/{mode}_{file_path}_map.png")
+        plt.clf()
 
 def eval(index, model, eval_loader, label_list, file_path, mode="layer-wise", device=args.device):
     # loop_size = len(model.hidden_states) if mode == "layer-wise" else model.num_heads
