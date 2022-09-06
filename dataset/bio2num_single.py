@@ -21,21 +21,17 @@ def get_files_path(filePath):
     return file_paths
 
 
-def get_pure_tokens(tokenList):
+def get_pure_tokens(tokenList, category):
     """
     filter out all the annotated tags to get the pure token list
     """
+    filter = ["O-", "X-", f"B-{category}-", f"I-{category}-"]
+    if category.islower():
+        filter = ["O-", "X-", "B-head-", "B-dependent-"]
     tokens = []
     for i in range(len(tokenList)):
-        tokenList[i] = tokenList[i]. \
-            replace("O-", "").replace("X-", "").replace("B-LOC-", "").replace("B-MISC-", ""). \
-            replace("B-ORG-", "").replace("B-PER-", "").replace("B-ADJP-", "").replace("B-ADVP-", ""). \
-            replace("B-CONJP-", "").replace("B-INTJ-", "").replace("B-LST-", "").replace("B-NP-", ""). \
-            replace("B-PP-", "").replace("B-PRT-", "").replace("B-SBAR-", "").replace("B-VP-", ""). \
-            replace("I-LOC-", "").replace("I-MISC-", "").replace("I-ORG-", "").replace("I-PER-", ""). \
-            replace("I-ADJP-", "").replace("I-ADVP-", "").replace("I-CONJP-", "").replace("I-INTJ-", ""). \
-            replace("I-LST-", "").replace("I-NP-", "").replace("I-PP-", "").replace("I-PRT-", ""). \
-            replace("I-SBAR-", "").replace("I-VP-", "")
+        for j in range(len(filter)):
+            tokenList[i] = tokenList[i].replace(filter[j], "")
         tokens.append(tokenList[i].split())
     return tokens
 
@@ -49,9 +45,8 @@ def get_tags(tagList, flag="ner"):
                     "I-LOC": 8}
     if flag == "chunk":
         tag_dict = {"O": 0, "B-ADJP": 1, "I-ADJP": 2, "B-ADVP": 3, "I-ADVP": 4, "B-CONJP": 5, "I-CONJP": 6, "B-INTJ": 7,
-                    "I-INTJ": 8,
-                    "B-LST": 9, "I-LST": 10, "B-NP": 11, "I-NP": 12, "B-PP": 13, "I-PP": 14, "B-PRT": 15, "I-PRT": 16,
-                    "B-SBAR": 17, "I-SBAR": 18, "B-VP": 19, "I-VP": 20}
+                    "I-INTJ": 8, "B-LST": 9, "I-LST": 10, "B-NP": 11, "I-NP": 12, "B-PP": 13, "I-PP": 14, "B-PRT": 15,
+                    "I-PRT": 16, "B-SBAR": 17, "I-SBAR": 18, "B-VP": 19, "I-VP": 20}
     tag_keys = list(tag_dict.keys())
     for i in range(len(tagList)):
         tagList[i] = tagList[i].split()
@@ -80,9 +75,9 @@ def get_single_tags(tagList, category="LOC"):
         tagList[i] = tagList[i].split()
         for j in range(len(tagList[i])):
             for index in range(len(tag_keys)):
-                if tagList[i][j].__contains__(f"{tag_keys[index] + '-'}"):
+                if str(tagList[i][j]).__contains__(f"{tag_keys[index] + '-'}"):
                     tagList[i][j] = tag_dict[f"{tag_keys[index]}"]
-                    break
+        # break
     # how to deal with X
     for i in range(len(tagList)):
         for j in range(len(tagList[i])):
@@ -115,10 +110,10 @@ def main():
             pd_reader = pd.read_csv(raw_files[file], header=None)[1].tolist()
             token_list = pd_reader.copy()
             tag_list = pd_reader.copy()
-            tokens = get_pure_tokens(token_list)  # get the pure tokens
             # flag = "ner" if "ner" in raw_files[file] else "chunk"
             # category = "".join(re.findall(r'[A-Z]', raw_files[file]))  # get the Uppercase file name which refers to the categories of the labels
             category = raw_files[file].split("_")[-1].replace(".csv", "")
+            tokens = get_pure_tokens(token_list, category)  # get the pure tokens
             tags = get_single_tags(tag_list, category)  # get the tags
 
             # save json file
