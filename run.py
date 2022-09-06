@@ -175,7 +175,7 @@ def eval(index, model, eval_loader, label_list, file_path, mode="layer-wise", de
                 metric.add_batch(predictions=true_predictions, references=true_labels)
             results = metric.compute()
 
-        print(f"{mode} on {file_path} has been evaluated..")
+        print(f"{mode} on {index} {file_path} has been evaluated..")
         return results
 
 
