@@ -66,14 +66,16 @@ def get_files_path(filePath):
     return file_paths
 
 
-def train(model, train_loader, eval_loader, label_list, file_path, mode="layer-wise", epochs=args.epochs, device=args.device):
+def train(model, train_loader, eval_loader, label_list, file_path, mode="layer-wise", epochs=args.epochs, device=args.device, profile=args.profile):
     model.to(device)
+    output_path = layer_wise_path if mode == "layer-wise" else head_wise_path
     criterion = nn.CrossEntropyLoss(ignore_index=-100) # remove specical token
     optimizer = torch.optim.Adam(
         filter(lambda p:p.requires_grad, model.parameters()), # only update the fc parameters (classifier)
         lr=args.lr,
     )
-    loop_size = len(model.hidden_states) if mode == "layer-wise" else model.num_heads
+    loop_size = len(model.hidden_states) if mode == "layer-wise" else model.num_heads * len(model.hidden_states)
+    final_score = []
     for i in range(loop_size): # i refers to head or layer
         optimizer.zero_grad() # make sure each layer's optimizer set to zero grad
         for epoch in tqdm(range(1, epochs + 1)):
@@ -94,64 +96,8 @@ def train(model, train_loader, eval_loader, label_list, file_path, mode="layer-w
         # torch.save(model.state_dict(), output_path + f"bert_classification_{i}.pt")
         print(f"{mode} {i} on {file_path} has been trained..")
         print(f"start to evaluate the model.. ")
-        eval(model, eval_loader, label_list, file_path, mode, device)
-
-def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=args.device, profile=args.profile):
-    loop_size = len(model.hidden_states) if mode == "layer-wise" else model.num_heads
-    output_path = layer_wise_path if mode == "layer-wise" else head_wise_path
-    final_score = []
-    with torch.no_grad():
-        if mode == "layer-wise":
-            for i in tqdm(range(loop_size)):  # i refers to head or layer
-                model.to(device)
-                # glue_metric = datasets.load_metric('glue')
-                metric = load_metric("seqeval")
-                for example_batched in eval_loader:
-                    input_ids = example_batched["input_ids"].to(device)
-                    attention_mask = example_batched["attention_mask"].to(device)
-                    labels = example_batched["labels"].int().to(device) # use int()
-                    outputs = model(input_ids, attention_mask)
-                    logits = outputs[i] # CLS
-                    preds = torch.argmax(logits, dim=2).int().to(device) # use int()
-                    # Remove ignored index (special tokens)
-                    true_predictions = [
-                        [label_list[p] for (p, l) in zip(pred, label) if l != -100]
-                        for pred, label in zip(preds, labels)
-                    ]
-                    true_labels = [
-                        [label_list[l] for (p, l) in zip(pred, label) if l != -100]
-                        for pred, label in zip(preds, labels)
-                    ]
-                    # glue_metric.add_batch(preds, labels)
-                    metric.add_batch(predictions=true_predictions, references=true_labels)
-                results = metric.compute()
-                final_score.append(results)
-        else:
-            for i in tqdm(range(model.num_heads * len(model.hidden_states))):  # i refers to head * layer
-                model.to(device)
-                # glue_metric = datasets.load_metric('glue')
-                metric = load_metric("seqeval")
-                for example_batched in eval_loader:
-                    input_ids = example_batched["input_ids"].to(device)
-                    attention_mask = example_batched["attention_mask"].to(device)
-                    labels = example_batched["labels"].int().to(device)  # use int()
-                    outputs = model(input_ids, attention_mask)
-                    logits = outputs[i]  # CLS
-                    preds = torch.argmax(logits, dim=2).int().to(device)  # use int()
-                    # Remove ignored index (special tokens)
-                    true_predictions = [
-                        [label_list[p] for (p, l) in zip(pred, label) if l != -100]
-                        for pred, label in zip(preds, labels)
-                    ]
-                    true_labels = [
-                        [label_list[l] for (p, l) in zip(pred, label) if l != -100]
-                        for pred, label in zip(preds, labels)
-                    ]
-                    # glue_metric.add_batch(preds, labels)
-                    metric.add_batch(predictions=true_predictions, references=true_labels)
-                results = metric.compute()
-                final_score.append(results)
-        print(f"{mode} on {file_path} has been evaluated..")
+        eval_results = eval(i, model, eval_loader, label_list, file_path, mode, device)
+        final_score.append(eval_results)
 
     # Save the evaluation
     with open(output_path + f"{mode}_{file_path}.txt", "w") as file:
@@ -167,15 +113,70 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
 
     # Save the profile figure of the output
     if profile:
-        if mode=="head-wise":
+        if mode == "head-wise":
             final_score = np.reshape(profile_logging, (model.num_heads, len(model.hidden_states)))
             final_score = pd.DataFrame(final_score, index=[f"head_{i}" for i in range(model.num_heads)],
                                        columns=[f"layer_{j}" for j in range(len(model.hidden_states))])
             sns_fig = sns.heatmap(final_score)
-        elif mode=="layer-wise":
+        elif mode == "layer-wise":
             x_ = [f"layer_{i}" for i in range(len(model.hidden_states))]
             sns_fig = sns.barplot(x=x_, y=profile_logging, palette="hls")
         plt.savefig(f"./output/{mode}_{file_path}_map.png")
+
+def eval(index, model, eval_loader, label_list, file_path, mode="layer-wise", device=args.device):
+    # loop_size = len(model.hidden_states) if mode == "layer-wise" else model.num_heads
+    with torch.no_grad():
+        if mode == "layer-wise":
+            # for i in tqdm(range(loop_size)):  # i refers to head or layer
+            model.to(device)
+            # glue_metric = datasets.load_metric('glue')
+            metric = load_metric("seqeval")
+            for example_batched in tqdm(eval_loader):
+                input_ids = example_batched["input_ids"].to(device)
+                attention_mask = example_batched["attention_mask"].to(device)
+                labels = example_batched["labels"].int().to(device) # use int()
+                outputs = model(input_ids, attention_mask)
+                logits = outputs[index] # CLS
+                preds = torch.argmax(logits, dim=2).int().to(device) # use int()
+                # Remove ignored index (special tokens)
+                true_predictions = [
+                    [label_list[p] for (p, l) in zip(pred, label) if l != -100]
+                    for pred, label in zip(preds, labels)
+                ]
+                true_labels = [
+                    [label_list[l] for (p, l) in zip(pred, label) if l != -100]
+                    for pred, label in zip(preds, labels)
+                ]
+                # glue_metric.add_batch(preds, labels)
+                metric.add_batch(predictions=true_predictions, references=true_labels)
+            results = metric.compute()
+        else:
+            # for i in tqdm(range(model.num_heads * len(model.hidden_states))):  # i refers to head * layer
+            model.to(device)
+            # glue_metric = datasets.load_metric('glue')
+            metric = load_metric("seqeval")
+            for example_batched in tqdm(eval_loader):
+                input_ids = example_batched["input_ids"].to(device)
+                attention_mask = example_batched["attention_mask"].to(device)
+                labels = example_batched["labels"].int().to(device)  # use int()
+                outputs = model(input_ids, attention_mask)
+                logits = outputs[index]  # CLS
+                preds = torch.argmax(logits, dim=2).int().to(device)  # use int()
+                # Remove ignored index (special tokens)
+                true_predictions = [
+                    [label_list[p] for (p, l) in zip(pred, label) if l != -100]
+                    for pred, label in zip(preds, labels)
+                ]
+                true_labels = [
+                    [label_list[l] for (p, l) in zip(pred, label) if l != -100]
+                    for pred, label in zip(preds, labels)
+                ]
+                # glue_metric.add_batch(preds, labels)
+                metric.add_batch(predictions=true_predictions, references=true_labels)
+            results = metric.compute()
+
+        print(f"{mode} on {file_path} has been evaluated..")
+        return results
 
 
 def main():
