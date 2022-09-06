@@ -165,7 +165,8 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
         if profile:
             if mode=="head-wise":
                 final_score = np.reshape(profile_logging, (model.num_heads, len(model.hidden_states)))
-                final_score = pd.DataFrame(final_score, columns=[f"head_{i}" for i in range(len(final_score))])
+                final_score = pd.DataFrame(final_score, index=[f"head_{i}" for i in range(model.num_heads)],
+                                           columns=[f"layer_{j}" for j in range(len(model.hidden_states))])
                 sns_fig = sns.heatmap(final_score)
             elif mode=="layer-wise":
                 x_ = [f"layer_{i}" for i in range(len(model.hidden_states))]
