@@ -95,6 +95,14 @@ def construct_data_loader(batch_size, dataset="ner", filePath="wsj_annotated_ner
     tag_dict = {"O": 0, f"B-{category}": 1, f"I-{category}": 2}
     if category.islower():
         tag_dict = {"O": 0, "B-head": 1, "B-dependent": 2}
+    if category == "VP":
+        tag_dict = {"O": 0, "B-ADVP": 1, "I-ADVP": 2, "B-VP":3, "I-VP": 4}
+    if category == "":
+        tag_dict = {"O": 0, "B-:": 1, "I-:": 2}
+    if category == "EX":
+        tag_dict = {"O": 0, "B-E:": 1, "I-E:": 2}
+    if category == "TO":
+        tag_dict = {"O": 0, "B-T:": 1, "I-T:": 2}
 
     return probing_train_dataloader, probing_eval_dataloader, list(tag_dict.keys())
 
