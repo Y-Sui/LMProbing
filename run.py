@@ -152,6 +152,8 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
                 results = metric.compute()
                 final_score.append(results)
         print(f"{mode} on {file_path} has been evaluated..")
+
+    # Save the evaluation
     with open(output_path + f"{mode}_{file_path}.txt", "w") as file:
         profile_logging = []
         for i in range(len(final_score)):
@@ -162,16 +164,18 @@ def eval(model, eval_loader, label_list, file_path, mode="layer-wise", device=ar
                        f"Accuracy, {final_score[i]['overall_accuracy']}" + "\n")
             # generate the heatmap according to the F1 score
             profile_logging.append(final_score[i]['overall_f1'])
-        if profile:
-            if mode=="head-wise":
-                final_score = np.reshape(profile_logging, (model.num_heads, len(model.hidden_states)))
-                final_score = pd.DataFrame(final_score, index=[f"head_{i}" for i in range(model.num_heads)],
-                                           columns=[f"layer_{j}" for j in range(len(model.hidden_states))])
-                sns_fig = sns.heatmap(final_score)
-            elif mode=="layer-wise":
-                x_ = [f"layer_{i}" for i in range(len(model.hidden_states))]
-                sns_fig = sns.barplot(x=x_, y=profile_logging, palette="hls")
-            plt.savefig(f"./output/{mode}_{file_path}_map.png")
+
+    # Save the profile figure of the output
+    if profile:
+        if mode=="head-wise":
+            final_score = np.reshape(profile_logging, (model.num_heads, len(model.hidden_states)))
+            final_score = pd.DataFrame(final_score, index=[f"head_{i}" for i in range(model.num_heads)],
+                                       columns=[f"layer_{j}" for j in range(len(model.hidden_states))])
+            sns_fig = sns.heatmap(final_score)
+        elif mode=="layer-wise":
+            x_ = [f"layer_{i}" for i in range(len(model.hidden_states))]
+            sns_fig = sns.barplot(x=x_, y=profile_logging, palette="hls")
+        plt.savefig(f"./output/{mode}_{file_path}_map.png")
 
 
 def main():
