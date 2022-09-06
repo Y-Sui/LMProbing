@@ -1,4 +1,8 @@
 import os
+# set the cuda card 5
+os.environ["CUDA_VISIBLE_DEVICES"]= "4"
+
+
 import argparse
 import datasets
 import numpy as np
@@ -36,9 +40,6 @@ args = parser.parse_args()
 
 # Setup devices (No distributed training here)
 args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-
-# set the cuda card 5
-os.environ["CUDA_VISIBLE_DEVICES"]="5"
 
 # set the save path
 layer_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_layer_wise/" + args.task + "/"
