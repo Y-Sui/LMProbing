@@ -40,6 +40,7 @@ class Bert_4_Classification_Head_Wise(nn.Module):
         super(Bert_4_Classification_Head_Wise, self).__init__()
         self.backbone = AutoModel.from_pretrained(ptm)
         self.num_labels = num_labels
+        self.num_heads = self.backbone.config.num_attention_heads
         for p in self.backbone.parameters():
             p.requires_grad = False  # freeze the backbone model
         self.last_hidden_state_size = self._get_last_hidden_state_size()
