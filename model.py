@@ -40,6 +40,7 @@ class Bert_4_Classification_Head_Wise(nn.Module):
         super(Bert_4_Classification_Head_Wise, self).__init__()
         self.backbone = AutoModel.from_pretrained(ptm)
         self.num_heads = self.backbone.config.num_attention_heads
+        self.last_hidden_state_size = self._get_last_hidden_state_size()
         self.num_labels = num_labels
         for p in self.backbone.parameters():
             p.requires_grad = False  # freeze the backbone model
@@ -60,6 +61,11 @@ class Bert_4_Classification_Head_Wise(nn.Module):
                 split_heads = layers[layer_idx].chunk(self.num_heads, 2) # split 768 into 12 sections (heads)
                 heads.append(self.classifier(split_heads[head_idx]))
         return heads
+
+    def _get_last_hidden_state_size(self):
+        backbone = self.backbone(torch.tensor([[1, 1]]), torch.tensor([[1, 1]]), output_hidden_states=True)
+        self.hidden_states = backbone.hidden_states
+        return backbone.hidden_states[0].shape[-1]
 
 
 # class Bert_4_Classification_Head_Wise(nn.Module):
