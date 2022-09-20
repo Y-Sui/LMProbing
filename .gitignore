@@ -1,2 +1,7 @@
 # dir 不需要提交的目录
 /outputs
+/datasets/chunk
+/datasets/dependency-fixed
+/datasets/ner
+/datasets/pos-fixed
+/datasets/*.json
