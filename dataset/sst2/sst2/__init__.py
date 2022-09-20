@@ -5,7 +5,7 @@ _SST = "../../dataset/sst2/data/"
 _SSTs = {
     "train": _SST + "train.tsv",
     "valid": _SST + "valid.tsv",
-    "test": _SST + "test.tsv",
+    "test.py": _SST + "test.py.tsv",
 }
 
 # --> DataLoader can do the batch computation for us

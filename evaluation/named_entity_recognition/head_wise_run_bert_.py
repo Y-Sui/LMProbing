@@ -95,10 +95,10 @@ def train(epochs, trainLoader, model, tokenizer, max_length, device):
         torch.save(model, output_path + f"bert_classification_head_{head}.bin")
 
 
-# test function
+# test.py function
 def test(head, eval_dataloader, model, tokenizer, max_length, device):
     model.to(device)
-    with torch.no_grad(): # when in test stage, no grad
+    with torch.no_grad(): # when in test.py stage, no grad
         glue_metric = datasets.load_metric('glue', 'sst2')  # load the metrics
         for batch in tqdm(eval_dataloader):
             data = list(batch[0])
@@ -159,7 +159,7 @@ def main():
     train_dataloader = DataLoader(training_data, batch_size=args.batch_size, shuffle=True)
     train(args.epochs, train_dataloader, model, tokenizer, args.max_length, args.device)
 
-    # test
+    # test.py
     for head in range(model.num_heads):
         output_path = "../../output/bert_classification_head_wise/"
         model = torch.load(output_path+f"bert_classification_head_{head}.bin")

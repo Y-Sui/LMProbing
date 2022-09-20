@@ -118,10 +118,13 @@ def train(model, train_loader, eval_loader, label_list, file_path, mode="layer-w
             final_score = np.reshape(profile_logging, (model.num_heads, len(model.hidden_states)))
             final_score = pd.DataFrame(final_score, index=[f"head_{i}" for i in range(model.num_heads)],
                                        columns=[f"layer_{j}" for j in range(len(model.hidden_states))])
-            sns_fig = sns.heatmap(final_score)
+            sns_fig = sns.heatmap(final_score, vmin=0, vmax=1, cmap="YlGnBu")
         elif mode == "layer-wise":
-            x_ = [f"layer_{i}" for i in range(len(model.hidden_states))]
-            sns_fig = sns.barplot(x=x_, y=profile_logging, palette="hls")
+            x_ = [f"{i}" for i in range(len(model.hidden_states))]
+            sns_fig = sns.barplot(x=x_, y=profile_logging, color="#42b7bd")
+            patch_h = [patch.get_height() for patch in sns_fig.patches]
+            idx_tallest = np.argmax(patch_h)
+            sns_fig.patches[idx_tallest].set_facecolor('#a834a8')
         plt.savefig(f"./output/{mode}_{file_path}_map.png")
         plt.clf()
 
@@ -191,7 +194,7 @@ def main():
                                                 shuffle=True if not args.no_shuffle else True,
                                                 num_workers=args.num_workers)
         # load the model
-        model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
+        # model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
         model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
         print(f"Start training for Layer-wise on {args.task}")
         # train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i], mode="layer-wise")
