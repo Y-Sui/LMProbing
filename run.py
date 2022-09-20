@@ -36,6 +36,7 @@ parser.add_argument("--max_length", default=50, type=int, help="Max length of th
 parser.add_argument("--num_workers", default=0, type=int)
 parser.add_argument("--lr", default=0.0001, type=float)
 parser.add_argument("--profile", action="store_true", help="whether to generate the heatmap")
+parser.add_argument("--mode", choices=["layer-wise", "head-wise"], type=str, help="choose training mode")
 args = parser.parse_args()
 
 # Setup devices (No distributed training here)
@@ -194,12 +195,15 @@ def main():
                                                 shuffle=True if not args.no_shuffle else True,
                                                 num_workers=args.num_workers)
         # load the model
-        # model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
-        model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
-        print(f"Start training for Layer-wise on {args.task}")
-        # train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i], mode="layer-wise")
-        print(f"Start training for Head-wise on {args.task}")
-        train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i], mode="head-wise")
+        if args.mode == "layer-wise":
+            model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
+            print(f"Start training for Layer-wise on {args.task}")
+            train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i],
+                  mode=args.mode)
+        elif args.mode == "head-wise":
+            model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
+            print(f"Start training for Head-wise on {args.task}")
+            train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i], mode=args.mode)
 
 if __name__ == "__main__":
     main()
