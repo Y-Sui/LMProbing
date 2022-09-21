@@ -54,6 +54,21 @@ if not os.path.exists(layer_wise_path):
 if not os.path.exists(head_wise_path):
     os.mkdir(head_wise_path)
 
+def get_double_repetitive_item(items):
+    if not isinstance(items, list):
+        return None
+    temp = []
+    double_items = []
+    for item in items:
+        if item not in temp:
+            if items.count(item) == 2:
+                double_items.append(item)
+            else:
+                pass
+        else:
+            temp.append(item)
+    return double_items
+
 def get_files_path(filePath, outPath):
     """
     return the file list
@@ -62,14 +77,14 @@ def get_files_path(filePath, outPath):
     out_files = os.listdir(outPath)
     file_paths = []
     for i in range(len(raw_files)):
-        for j in range(len(out_files)):
-            if raw_files[i].replace(".csv", "") not in out_files[j]:
-                if raw_files[i].find("train") == -1 and raw_files[i].find("eval") == -1:
-                        file_paths.append(raw_files[i].replace(".csv", ""))
-                    continue
-        # else:
-        #     raw_files.pop(i)  # remove the elements
-    return file_paths
+        if raw_files[i].find("train") == -1 and raw_files[i].find("eval") == -1:
+            file_paths.append(raw_files[i].replace(".csv", ""))
+    for j in range(len(out_files)):
+        out_files[j] = out_files[j].replace("layer-wise_","").replace("head-wise_", "").replace("_map.png", "")
+    out_files = get_double_repetitive_item(out_files)
+    filter_paths = list(set(file_paths).difference(set(out_files)))
+
+    return filter_paths
 
 
 def train(model, train_loader, eval_loader, label_list, file_path, mode="layer-wise", epochs=args.epochs, device=args.device, profile=args.profile):
