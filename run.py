@@ -207,24 +207,23 @@ def eval(index, model, eval_loader, label_list, file_path, mode="layer-wise", de
 
 def main():
     filePath = get_files_path(filePath=f"./dataset/{args.task}", outPath="./output/")
-    print(filePath)
-    # for i in range(len(filePath)):
-    #     # set the data loader
-    #     probing_train_dataloader, \
-    #     probing_eval_dataloader, \
-    #     probing_label_list = construct_data_loader(batch_size=args.batch_size, dataset=args.task, filePath=filePath[i],
-    #                                             shuffle=True if not args.no_shuffle else True,
-    #                                             num_workers=args.num_workers)
-    #     # load the model
-    #     if args.mode == "layer-wise":
-    #         model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
-    #         print(f"Start training for Layer-wise on {args.task}")
-    #         train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i],
-    #               mode=args.mode)
-    #     elif args.mode == "head-wise":
-    #         model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
-    #         print(f"Start training for Head-wise on {args.task}")
-    #         train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i], mode=args.mode)
+    for i in range(len(filePath)):
+        # set the data loader
+        probing_train_dataloader, \
+        probing_eval_dataloader, \
+        probing_label_list = construct_data_loader(batch_size=args.batch_size, dataset=args.task, filePath=filePath[i],
+                                                shuffle=True if not args.no_shuffle else True,
+                                                num_workers=args.num_workers)
+        # load the model
+        if args.mode == "layer-wise":
+            model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
+            print(f"Start training for Layer-wise on {args.task}")
+            train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i],
+                  mode=args.mode)
+        elif args.mode == "head-wise":
+            model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
+            print(f"Start training for Head-wise on {args.task}")
+            train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i], mode=args.mode)
 
 if __name__ == "__main__":
     main()
