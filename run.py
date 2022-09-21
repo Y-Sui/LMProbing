@@ -66,6 +66,7 @@ def get_files_path(filePath, outPath):
             if raw_files[i].replace(".csv", "") not in out_files[j]:
                 if raw_files[i].find("train") == -1 and raw_files[i].find("eval") == -1:
                         file_paths.append(raw_files[i].replace(".csv", ""))
+                    continue
         # else:
         #     raw_files.pop(i)  # remove the elements
     return file_paths
