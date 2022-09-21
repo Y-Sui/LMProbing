@@ -54,15 +54,18 @@ if not os.path.exists(layer_wise_path):
 if not os.path.exists(head_wise_path):
     os.mkdir(head_wise_path)
 
-def get_files_path(filePath):
+def get_files_path(filePath, outPath):
     """
     return the file list
     """
     raw_files = os.listdir(filePath)
+    out_files = os.listdir(outPath)
     file_paths = []
     for i in range(len(raw_files)):
-        if raw_files[i].find("train") == -1 and raw_files[i].find("eval") == -1:
-            file_paths.append(raw_files[i].replace(".csv", ""))
+        for j in range(len(out_files)):
+            if raw_files[i].replace(".csv", "") not in out_files[j]:
+                if raw_files[i].find("train") == -1 and raw_files[i].find("eval") == -1:
+                        file_paths.append(raw_files[i].replace(".csv", ""))
         # else:
         #     raw_files.pop(i)  # remove the elements
     return file_paths
@@ -71,7 +74,7 @@ def get_files_path(filePath):
 def train(model, train_loader, eval_loader, label_list, file_path, mode="layer-wise", epochs=args.epochs, device=args.device, profile=args.profile):
     model.to(device)
     output_path = layer_wise_path if mode == "layer-wise" else head_wise_path
-    criterion = nn.CrossEntropyLoss(ignore_index=-100) # remove specical token
+    criterion = nn.CrossEntropyLoss(ignore_index=-100) # remove special token
     optimizer = torch.optim.Adam(
         filter(lambda p:p.requires_grad, model.parameters()), # only update the fc parameters (classifier)
         lr=args.lr,
@@ -186,24 +189,25 @@ def eval(index, model, eval_loader, label_list, file_path, mode="layer-wise", de
 
 
 def main():
-    filePath = get_files_path(f"./dataset/{args.task}")
-    for i in range(len(filePath)):
-        # set the data loader
-        probing_train_dataloader, \
-        probing_eval_dataloader, \
-        probing_label_list = construct_data_loader(batch_size=args.batch_size, dataset=args.task, filePath=filePath[i],
-                                                shuffle=True if not args.no_shuffle else True,
-                                                num_workers=args.num_workers)
-        # load the model
-        if args.mode == "layer-wise":
-            model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
-            print(f"Start training for Layer-wise on {args.task}")
-            train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i],
-                  mode=args.mode)
-        elif args.mode == "head-wise":
-            model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
-            print(f"Start training for Head-wise on {args.task}")
-            train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i], mode=args.mode)
+    filePath = get_files_path(filePath=f"./dataset/{args.task}", outPath="./output/")
+    print(filePath)
+    # for i in range(len(filePath)):
+    #     # set the data loader
+    #     probing_train_dataloader, \
+    #     probing_eval_dataloader, \
+    #     probing_label_list = construct_data_loader(batch_size=args.batch_size, dataset=args.task, filePath=filePath[i],
+    #                                             shuffle=True if not args.no_shuffle else True,
+    #                                             num_workers=args.num_workers)
+    #     # load the model
+    #     if args.mode == "layer-wise":
+    #         model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
+    #         print(f"Start training for Layer-wise on {args.task}")
+    #         train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i],
+    #               mode=args.mode)
+    #     elif args.mode == "head-wise":
+    #         model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
+    #         print(f"Start training for Head-wise on {args.task}")
+    #         train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i], mode=args.mode)
 
 if __name__ == "__main__":
     main()
