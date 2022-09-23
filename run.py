@@ -82,9 +82,8 @@ def get_files_path(filePath, outPath):
     for j in range(len(out_files)):
         out_files[j] = out_files[j].replace("layer-wise_","").replace("head-wise_", "").replace("_map.png", "")
     out_files = get_double_repetitive_item(out_files)
-    print(out_files)
     filter_paths = list(set(file_paths).difference(set(out_files)))
-
+    print(filter_paths)
     return filter_paths
 
 
