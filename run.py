@@ -79,6 +79,7 @@ def get_files_path(filePath, outPath):
     for i in range(len(raw_files)):
         if raw_files[i].find("train") == -1 and raw_files[i].find("eval") == -1:
             file_paths.append(raw_files[i].replace(".csv", ""))
+    print(file_paths)
     for j in range(len(out_files)):
         out_files[j] = out_files[j].replace("layer-wise_","").replace("head-wise_", "").replace("_map.png", "")
 
