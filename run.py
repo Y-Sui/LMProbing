@@ -1,33 +1,43 @@
 import os
-# set the cuda card 5
-os.environ["CUDA_VISIBLE_DEVICES"]= "4"
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "4"  # set the cuda card 5
 
 import argparse
-import datasets
+import logging
+import wandb
 import numpy as np
+import pandas as pd
+import seaborn as sns
+from tqdm import tqdm
+from matplotlib import pyplot as plt
+
 import torch
 import torch.nn as nn
 from datasets import load_metric
-from matplotlib import pyplot as plt
-from tqdm import tqdm
+from dataset.config import DataConfig, ModelConfig
 from model import Bert_4_Classification_Head_Wise, Bert_4_Classification_Layer_Wise
-from dataloader import *
-import seaborn as sns
-import pandas as pd
+from dataloader import Sequence_Classification
+
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
+                    datefmt='%m/%d/%Y %H:%M:%S',
+                    level=logging.INFO)
+
 
 # Required parameters
 parser = argparse.ArgumentParser()
 parser.add_argument("--task", default="ner", type=str, help="Please specify the task name {NER or Chunk}")
-# parser.add_argument("--dataset", default="SST2", type=str, help="The dataset name, the options can be sst, SST2, etc")
-parser.add_argument("--model_name_or_path", default="bert-base-uncased", type=str, help="Path to save the pretrained model")
+parser.add_argument("--model_name_or_path", default="bert-base-uncased", type=str,
+                    help="Path to save the pretrained model")
 parser.add_argument("--embed_size", default=256, type=int)
 parser.add_argument("--label_size", default=2, type=int, help="classification task: the number of the label classes")
+parser.add_argument("--corpus", default="//home/weicheng/data_interns/yuan/", type=str)
 # Options parameters
-parser.add_argument("--config_name", default="", type=str, help="Pretrained config name or path if not the same as model_name_or_path", )
-parser.add_argument("--tokenizer_name", default="", type=str, help="Pretrained tokenizer name or path if not the same as model_name_or_path", )
-parser.add_argument("--cache_dir", default=None, type=str, help="Where do you want to store the pre-trained models downloaded from s3", )
-parser.add_argument("--batch_size", default=8, type=int, help="Batch size.")
+parser.add_argument("--config_name", default="", type=str,
+                    help="Pretrained config name or path if not the same as model_name_or_path", )
+parser.add_argument("--tokenizer_name", default="", type=str,
+                    help="Pretrained tokenizer name or path if not the same as model_name_or_path", )
+parser.add_argument("--cache_dir", default=None, type=str,
+                    help="Where do you want to store the pre-trained models downloaded from s3", )
+parser.add_argument("--batch_size", default=64, type=int, help="Batch size.")
 parser.add_argument("--no_shuffle", action="store_true", help="Whether not to shuffle the dataloader")
 parser.add_argument("--seed", type=int, default=42)
 parser.add_argument("--no_cuda", action="store_true", help="Whether not to use CUDA when available")
@@ -41,18 +51,6 @@ args = parser.parse_args()
 
 # Setup devices (No distributed training here)
 args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-
-# set the save path
-layer_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_layer_wise/" + args.task + "/"
-head_wise_path = "../../weicheng/data_interns/yuan/eval-probing/bert_classification_head_wise/" + args.task + "/"
-
-# layer_wise_path = "output/bert_classification_layer_wise" + args.task + "/"
-# head_wise_path = "output/bert_classification_head_wise" + args.task + "/"
-
-if not os.path.exists(layer_wise_path):
-    os.mkdir(layer_wise_path)
-if not os.path.exists(head_wise_path):
-    os.mkdir(head_wise_path)
 
 def get_double_repetitive_item(items):
     if not isinstance(items, list):
@@ -69,72 +67,114 @@ def get_double_repetitive_item(items):
             temp.append(item)
     return double_items
 
+
 def get_files_path(filePath, outPath):
     """
     return the file list
     """
     raw_files = os.listdir(filePath)
     out_files = os.listdir(outPath)
-    file_paths = []
+    # file_paths = []
+    # for i in range(len(raw_files)):
+    #     if raw_files[i].find("train") == -1 and raw_files[i].find("eval") == -1:
+    #         file_paths.append(raw_files[i].replace(".csv", ""))
+    # for j in range(len(out_files)):
+    #     out_files[j] = out_files[j].replace("layer-wise_", "").replace("head-wise_", "").replace("_map.png", "")
+    # out_files = get_double_repetitive_item(out_files)
+    # filter_paths = list(set(file_paths).difference(set(out_files)))
+    file_paths = {}
+    train_files, eval_files = [], []
     for i in range(len(raw_files)):
-        if raw_files[i].find("train") == -1 and raw_files[i].find("eval") == -1:
-            file_paths.append(raw_files[i].replace(".csv", ""))
-    for j in range(len(out_files)):
-        out_files[j] = out_files[j].replace("layer-wise_","").replace("head-wise_", "").replace("_map.png", "")
-    out_files = get_double_repetitive_item(out_files)
-    print(out_files)
-    filter_paths = list(set(file_paths).difference(set(out_files)))
-
-    return filter_paths
+        if raw_files[i].__contains__("train") == 1:
+            train_files.append(os.path.join(filePath, raw_files[i]))
+        else:
+            eval_files.append(os.path.join(filePath, raw_files[i]))
+    file_paths["train"] = train_files
+    file_paths["eval"] = eval_files
+    return file_paths
 
 
-def train(model, train_loader, eval_loader, label_list, file_path, mode="layer-wise", epochs=args.epochs, device=args.device, profile=args.profile):
+def train(model, train_loader, eval_loader, label_list, file_path, mode, label, epochs=args.epochs,
+          device=args.device, profile=args.profile):
+    wandb.define_metric('epoch')
+    wandb.define_metric("train/*", step_metric="epoch")
+    wandb.define_metric("valid/*", step_metric="epoch")
+    sample_config = DataConfig()
+    logger = logging.getLogger("Eval-probing-training")
+    logger.info("Train() started!")
+    if mode == "layer-wise":
+        logging_path = os.path.join(sample_config.logging_path, args.task, "bert_classification_layer_wise")
+    else:
+        logging_path = os.path.join(sample_config.logging_path, args.task, "bert_classification_head_wise")
     model.to(device)
-    output_path = layer_wise_path if mode == "layer-wise" else head_wise_path
-    criterion = nn.CrossEntropyLoss(ignore_index=-100) # remove special token
+    criterion = nn.CrossEntropyLoss(ignore_index=-100)  # remove special token
     optimizer = torch.optim.Adam(
-        filter(lambda p:p.requires_grad, model.parameters()), # only update the fc parameters (classifier)
+        filter(lambda p: p.requires_grad, model.parameters()),  # only update the fc parameters (classifier)
         lr=args.lr,
     )
     loop_size = len(model.hidden_states) if mode == "layer-wise" else model.num_heads * len(model.hidden_states)
     final_score = []
-    for i in range(loop_size): # i refers to head or layer
-        optimizer.zero_grad() # make sure each layer's optimizer set to zero grad
+    for i in range(loop_size):  # i refers to head or layer
+        optimizer.zero_grad()  # make sure each layer's optimizer set to zero grad
         for epoch in range(1, epochs + 1):
-            for idx, example_batched in enumerate(train_loader):
+            for idx, train_batches in enumerate(train_loader):
                 optimizer.zero_grad()
-                input_ids = example_batched["input_ids"].to(device)
-                attention_mask = example_batched["attention_mask"].to(device)
-                labels = example_batched["labels"].to(device)
+                input_ids = train_batches["input_ids"].to(device)
+                attention_mask = train_batches["attention_mask"].to(device)
+                labels = train_batches["labels"].to(device)
                 outputs = model(input_ids, attention_mask)
                 logits = outputs[i]
-                preds = logits.permute(0,2,1).to(device) # adapt to the nn.crossentropy, inputs = [batch_size, nb_classes, *additional_dims]; target in the shape [batch_size, *additional_dims]
+                preds = logits.permute(0, 2, 1).to(
+                    device)  # adapt to the nn.crossentropy, inputs = [batch_size, nb_classes, *additional_dims]; target in the shape [batch_size, *additional_dims]
                 loss = criterion(preds, labels)
                 loss.backward()
                 optimizer.step()
-                if idx % 30 == 0:
-                    print(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
-        # output_path = layer_wise_path if mode == "layer-wise" else head_wise_path
-        # torch.save(model.state_dict(), output_path + f"bert_classification_{i}.pt")
-        print(f"{mode} {i} on {file_path} has been trained..")
-        print(f"start to evaluate the model.. ")
+                if idx % 5 == 0:
+                    logger.info(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
+                    wandb.log({
+                        "epoch": epoch,
+                        f"train/loss_{label}": loss.data
+                    })
+        torch.save(model.state_dict(), os.path.join(sample_config.checkpoints, f"{mode}_idx_{i}.pt"))
+        logger.info(f"{mode} {i} on {file_path} has been trained..")
+        logger.info(f"start to evaluate the model..")
         eval_results = eval(i, model, eval_loader, label_list, file_path, mode, device)
         final_score.append(eval_results)
 
     # Save the evaluation
-    with open(output_path + f"{mode}_{file_path}.txt", "w") as file:
-        profile_logging = []
+    logger.info(f"save the evaluation score to {logging_path}/{mode}_{file_path}.csv")
+    profile_logging = []
+    with open(os.path.join(logging_path, f"{label}_{mode}_{file_path}.csv"), "w") as file:
+        acc, recall, f1, prec = [], [], [], []
         for i in range(len(final_score)):
-            file.write(f"Performance of the {i}th is: "
-                       f"precision, {final_score[i]['overall_precision']}, "
-                       f"Recall, {final_score[i]['overall_recall']}, "
-                       f"F1, {final_score[i]['overall_f1']}, "
-                       f"Accuracy, {final_score[i]['overall_accuracy']}" + "\n")
+            logger.info(f"{label} Performance of the {i}th is:")
+            logger.info(f"{label} precision: {final_score[i]['overall_precision']}")
+            logger.info(f"{label} Recall: {final_score[i]['overall_recall']}")
+            logger.info(f"{label} F1, {final_score[i]['overall_f1']}")
+            logger.info(f"{label} Accuracy, {final_score[i]['overall_accuracy']}")
+
+            wandb.log({
+                f"valid/acc_{label}": final_score[i]['overall_accuracy'],
+                f"valid/prec_{label}": final_score[i]['overall_precision'],
+                f"valid/f1_{label}": final_score[i]['overall_f1'],
+                f"valid/recall_{label}": final_score[i]['overall_recall']
+            })
+
+            acc.append(final_score[i]['overall_accuracy'])
+            recall.append(final_score[i]['overall_recall'])
+            f1.append(final_score[i]['overall_f1'])
+            prec.append(final_score[i]['overall_precision'])
             # generate the heatmap according to the F1 score
             profile_logging.append(final_score[i]['overall_f1'])
 
+        metric_frame = pd.DataFrame({f"{mode}":[i for i in range(len(final_score))],
+                                     "Accuracy": acc, "Precision": prec, "Recall": recall, "F1": f1})
+        metric_frame.to_csv(file, index=False, sep=",")
+    logger.info(f"{label} metrics evaluation has been saved!")
+
     # Save the profile figure of the output
     if profile:
+        logger.info(f"Start to generate the {label} {mode}/{file_path} profile png..")
         if mode == "head-wise":
             final_score = np.reshape(profile_logging, (model.num_heads, len(model.hidden_states)))
             final_score = pd.DataFrame(final_score, index=[f"head_{i}" for i in range(model.num_heads)],
@@ -146,85 +186,96 @@ def train(model, train_loader, eval_loader, label_list, file_path, mode="layer-w
             patch_h = [patch.get_height() for patch in sns_fig.patches]
             idx_tallest = np.argmax(patch_h)
             sns_fig.patches[idx_tallest].set_facecolor('#a834a8')
-        plt.savefig(f"./output/{mode}_{file_path}_map.png")
+        plt.savefig(os.path.join(sample_config.output_path, args.task, f"{label}_{mode}_{file_path}_map.png"))
         plt.clf()
 
-def eval(index, model, eval_loader, label_list, file_path, mode="layer-wise", device=args.device):
-    # loop_size = len(model.hidden_states) if mode == "layer-wise" else model.num_heads
-    with torch.no_grad():
-        if mode == "layer-wise":
-            # for i in tqdm(range(loop_size)):  # i refers to head or layer
-            model.to(device)
-            # glue_metric = datasets.load_metric('glue')
-            metric = load_metric("seqeval")
-            for example_batched in tqdm(eval_loader):
-                input_ids = example_batched["input_ids"].to(device)
-                attention_mask = example_batched["attention_mask"].to(device)
-                labels = example_batched["labels"].int().to(device) # use int()
-                outputs = model(input_ids, attention_mask)
-                logits = outputs[index] # CLS
-                preds = torch.argmax(logits, dim=2).int().to(device) # use int()
-                # Remove ignored index (special tokens)
-                true_predictions = [
-                    [label_list[p] for (p, l) in zip(pred, label) if l != -100]
-                    for pred, label in zip(preds, labels)
-                ]
-                true_labels = [
-                    [label_list[l] for (p, l) in zip(pred, label) if l != -100]
-                    for pred, label in zip(preds, labels)
-                ]
-                # glue_metric.add_batch(preds, labels)
-                metric.add_batch(predictions=true_predictions, references=true_labels)
-            results = metric.compute()
-        else:
-            # for i in tqdm(range(model.num_heads * len(model.hidden_states))):  # i refers to head * layer
-            model.to(device)
-            # glue_metric = datasets.load_metric('glue')
-            metric = load_metric("seqeval")
-            for example_batched in tqdm(eval_loader):
-                input_ids = example_batched["input_ids"].to(device)
-                attention_mask = example_batched["attention_mask"].to(device)
-                labels = example_batched["labels"].int().to(device)  # use int()
-                outputs = model(input_ids, attention_mask)
-                logits = outputs[index]  # CLS
-                preds = torch.argmax(logits, dim=2).int().to(device)  # use int()
-                # Remove ignored index (special tokens)
-                true_predictions = [
-                    [label_list[p] for (p, l) in zip(pred, label) if l != -100]
-                    for pred, label in zip(preds, labels)
-                ]
-                true_labels = [
-                    [label_list[l] for (p, l) in zip(pred, label) if l != -100]
-                    for pred, label in zip(preds, labels)
-                ]
-                # glue_metric.add_batch(preds, labels)
-                metric.add_batch(predictions=true_predictions, references=true_labels)
-            results = metric.compute()
 
-        print(f"{mode} on {index} {file_path} has been evaluated..")
+def eval(index, model, eval_loader, label_list, file_path, mode, device=args.device):
+    logger = logging.getLogger("Eval-probing-evaluation")
+    logger.info("Eval() started!")
+    with torch.no_grad():
+        model.to(device)
+        metric = load_metric("seqeval")
+        for example_batched in tqdm(eval_loader):
+            input_ids = example_batched["input_ids"].to(device)
+            attention_mask = example_batched["attention_mask"].to(device)
+            labels = example_batched["labels"].int().to(device)  # use int()
+            outputs = model(input_ids, attention_mask)
+            logits = outputs[index]  # CLS
+            preds = torch.argmax(logits, dim=2).int().to(device)  # use int()
+            # Remove ignored index (special tokens)
+            true_predictions = [
+                [label_list[p] for (p, l) in zip(pred, label) if l != -100]
+                for pred, label in zip(preds, labels)
+            ]
+            true_labels = [
+                [label_list[l] for (p, l) in zip(pred, label) if l != -100]
+                for pred, label in zip(preds, labels)
+            ]
+            # print(true_predictions[0])
+            # print(true_labels[0])
+            metric.add_batch(predictions=true_predictions, references=true_labels)
+        results = metric.compute()
+
+        logger.info(f"{mode} on {index} {file_path} has been evaluated..")
         return results
 
 
 def main():
-    filePath = get_files_path(filePath=f"./dataset/{args.task}", outPath="./output/")
-    for i in range(len(filePath)):
+    logger = logging.getLogger("Eval-probing")
+    logger.info(f"Args: {args}")
+    sample_config = DataConfig()
+    pos_sample_path = get_files_path(filePath=os.path.join(sample_config.data_path, f"{args.task}", "samples"),
+                                     outPath=os.path.join(sample_config.output_path, f"{args.task}"))
+    neg_sample_path = get_files_path(filePath=os.path.join(sample_config.data_path, f"{args.task}", "neg_samples"),
+                                     outPath=os.path.join(sample_config.output_path, f"{args.task}"))
+    dataloader_config = Sequence_Classification(args)
+    for i in range(len(pos_sample_path["train"])):
+        file_name = pos_sample_path['train'][i].split('/')[-1].replace('_train', '')
+        # Wandb init
+        project = 'Eval Probing'
+        entity = 'yuansui'
+        group = 'Eval-probing-for-layer-wise-and-head-wise'
+        display_name = f"task[{args.task}/{file_name.replace('.json', '')}]-mode[{args.mode}]"
+        wandb.init(reinit=True, project=project, entity=entity,
+                   name=display_name, group=group, tags=["train & eval"])
+        wandb.config["args"] = vars(args)
+        wandb.config["dataset"] = f"{file_name.replace('.json', '')}"
         # set the data loader
+        logger.info(f"Constructing the dataloader for {args.task}/{file_name.replace('.json', '')}")
         probing_train_dataloader, \
         probing_eval_dataloader, \
-        probing_label_list = construct_data_loader(batch_size=args.batch_size, dataset=args.task, filePath=filePath[i],
-                                                shuffle=True if not args.no_shuffle else True,
-                                                num_workers=args.num_workers)
+        probing_label_list = dataloader_config.construct_data_loader(batch_size=args.batch_size, idx=i,
+                                                   file_path=pos_sample_path,
+                                                   shuffle=True if not args.no_shuffle else True,
+                                                   num_workers=args.num_workers)
+        logger.info(f"Constructing the negative dataloader for {args.task}/{neg_sample_path['train'][i].split('/')[-1].replace('_train', '')}")
+        neg_probing_train_dataloader, \
+        neg_probing_eval_dataloader, \
+        neg_probing_label_list = dataloader_config.construct_data_loader(batch_size=args.batch_size, idx=i,
+                                                       file_path=neg_sample_path,
+                                                       shuffle=True if not args.no_shuffle else True,
+                                                       num_workers=args.num_workers)
         # load the model
         if args.mode == "layer-wise":
             model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
-            print(f"Start training for Layer-wise on {args.task}")
-            train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i],
-                  mode=args.mode)
+            logger.info(f"{args.mode} exp on {args.task} for positive samples starts")
+            train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list,
+                  file_name, mode=args.mode, label="pos")
+            logger.info(f"{args.mode} exp on {args.task} for negative samples starts")
+            train(model_layer_wise, neg_probing_train_dataloader, neg_probing_eval_dataloader, neg_probing_label_list,
+                  neg_sample_path['train'][i].split('/')[-1].replace('_train', ''), mode=args.mode, label="neg")
         elif args.mode == "head-wise":
             model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
-            print(f"Start training for Head-wise on {args.task}")
-            train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list, filePath[i], mode=args.mode)
+            logger.info(f"{args.mode} exp on {args.task} for positive samples starts")
+            train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list,
+                  file_name, mode=args.mode, label="pos")
+            logger.info(f"{args.mode} exp on {args.task} for negative samples starts")
+            train(model_head_wise, neg_probing_train_dataloader, neg_probing_eval_dataloader, neg_probing_label_list,
+                  neg_sample_path['train'][i].split('/')[-1].replace('_train', ''), mode=args.mode, label="neg")
+        logger.info("finish")
+        wandb.log({"finish": True})
+        wandb.finish()
 
 if __name__ == "__main__":
     main()
-
