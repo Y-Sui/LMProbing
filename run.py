@@ -133,7 +133,8 @@ def train(model, train_loader, eval_loader, label_list, file_path, mode, label, 
                     logger.info(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
                     wandb.log({
                         "epoch": epoch,
-                        f"train/loss_{label}": loss.data
+                        f"train/loss_{label}": loss.data,
+                        f"{mode}-th": i
                     })
         torch.save(model.state_dict(), os.path.join(sample_config.checkpoints, f"{mode}_idx_{i}.pt"))
         logger.info(f"{mode} {i} on {file_path} has been trained..")
@@ -154,10 +155,11 @@ def train(model, train_loader, eval_loader, label_list, file_path, mode, label, 
             logger.info(f"{label} Accuracy, {final_score[i]['overall_accuracy']}")
 
             wandb.log({
-                f"valid/acc_{label}": final_score[i]['overall_accuracy'],
-                f"valid/prec_{label}": final_score[i]['overall_precision'],
-                f"valid/f1_{label}": final_score[i]['overall_f1'],
-                f"valid/recall_{label}": final_score[i]['overall_recall']
+                f"valid/{label}/acc": final_score[i]['overall_accuracy'],
+                f"valid/{label}/prec": final_score[i]['overall_precision'],
+                f"valid/{label}/f1": final_score[i]['overall_f1'],
+                f"valid/{label}/recall": final_score[i]['overall_recall'],
+                f"{mode}-th": i
             })
 
             acc.append(final_score[i]['overall_accuracy'])
@@ -188,6 +190,7 @@ def train(model, train_loader, eval_loader, label_list, file_path, mode, label, 
             sns_fig.patches[idx_tallest].set_facecolor('#a834a8')
         plt.savefig(os.path.join(sample_config.output_path, args.task, f"{label}_{mode}_{file_path}_map.png"))
         plt.clf()
+    return final_score
 
 
 def eval(index, model, eval_loader, label_list, file_path, mode, device=args.device):
@@ -212,12 +215,10 @@ def eval(index, model, eval_loader, label_list, file_path, mode, device=args.dev
                 [label_list[l] for (p, l) in zip(pred, label) if l != -100]
                 for pred, label in zip(preds, labels)
             ]
-            # print(true_predictions[0])
-            # print(true_labels[0])
             metric.add_batch(predictions=true_predictions, references=true_labels)
         results = metric.compute()
 
-        logger.info(f"{mode} on {index} {file_path} has been evaluated..")
+        logger.info(f"{mode} {index} on {file_path} has been evaluated..")
         return results
 
 
@@ -257,22 +258,40 @@ def main():
                                                        shuffle=True if not args.no_shuffle else True,
                                                        num_workers=args.num_workers)
         # load the model
+        pos_final_score, neg_final_score = [], []
         if args.mode == "layer-wise":
             model_layer_wise = Bert_4_Classification_Layer_Wise(num_labels=len(probing_label_list))
             logger.info(f"{args.mode} exp on {args.task} for positive samples starts")
-            train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list,
+            pos_final_score = train(model_layer_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list,
                   file_name, mode=args.mode, label="pos")
             logger.info(f"{args.mode} exp on {args.task} for negative samples starts")
-            train(model_layer_wise, neg_probing_train_dataloader, neg_probing_eval_dataloader, neg_probing_label_list,
+            neg_final_score = train(model_layer_wise, neg_probing_train_dataloader, neg_probing_eval_dataloader, neg_probing_label_list,
                   neg_sample_path['train'][i].split('/')[-1].replace('_train', ''), mode=args.mode, label="neg")
         elif args.mode == "head-wise":
             model_head_wise = Bert_4_Classification_Head_Wise(num_labels=len(probing_label_list))
             logger.info(f"{args.mode} exp on {args.task} for positive samples starts")
-            train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list,
+            pos_final_score = train(model_head_wise, probing_train_dataloader, probing_eval_dataloader, probing_label_list,
                   file_name, mode=args.mode, label="pos")
             logger.info(f"{args.mode} exp on {args.task} for negative samples starts")
-            train(model_head_wise, neg_probing_train_dataloader, neg_probing_eval_dataloader, neg_probing_label_list,
+            neg_final_score = train(model_head_wise, neg_probing_train_dataloader, neg_probing_eval_dataloader, neg_probing_label_list,
                   neg_sample_path['train'][i].split('/')[-1].replace('_train', ''), mode=args.mode, label="neg")
+        else:
+            logger.warning("Unsupported mode")
+        for i in range(len(pos_final_score)):
+            logger.info(f"pos-neg Performance of the {i}th is:")
+            logger.info(f"pos-neg precision: {pos_final_score[i]['overall_precision'] - neg_final_score[i]['overall_precision']}")
+            logger.info(f"pos-neg Recall: {pos_final_score[i]['overall_recall'] - neg_final_score[i]['overall_recall']}")
+            logger.info(f"pos-neg F1, {pos_final_score[i]['overall_f1'] - neg_final_score[i]['overall_f1']}")
+            logger.info(f"pos-neg Accuracy, {pos_final_score[i]['overall_accuracy'] - neg_final_score[i]['overall_accuracy']}")
+
+            wandb.log({
+                f"valid/gap/acc": pos_final_score[i]['overall_accuracy'] - neg_final_score[i]['overall_accuracy'],
+                f"valid/gap/prec": pos_final_score[i]['overall_precision'] - neg_final_score[i]['overall_precision'],
+                f"valid/gap/f1": pos_final_score[i]['overall_f1'] - neg_final_score[i]['overall_f1'],
+                f"valid/gap/recall": pos_final_score[i]['overall_recall'] - neg_final_score[i]['overall_recall'],
+                f"{args.mode}-th": i
+            })
+
         logger.info("finish")
         wandb.log({"finish": True})
         wandb.finish()
