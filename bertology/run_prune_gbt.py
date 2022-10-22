@@ -131,7 +131,7 @@ def compute_heads_importance(
 
 
 def mask_heads(args, model, eval_dataloader):
-    """This method shows how to mask head (set some heads to zero), to test.py the effect on the network,
+    """This method shows how to mask head (set some heads to zero), to test the effect on the network,
     based on the head importance scores, as described in Michel et al. (http://arxiv.org/abs/1905.10650)
     """
     _, head_importance, loss = compute_heads_importance(args, model, eval_dataloader, compute_entropy=False)
@@ -184,7 +184,7 @@ def prune_heads(args, model, eval_dataloader, head_mask):
     """This method shows how to prune head (remove heads weights) based on
     the head importance scores as described in Michel et al. (http://arxiv.org/abs/1905.10650)
     """
-    # Try pruning and test.py time speedup
+    # Try pruning and aaaa.py.py time speedup
     # Pruning is like masking but we actually remove the masked weights
     before_time = datetime.now()
     _, _, loss = compute_heads_importance(

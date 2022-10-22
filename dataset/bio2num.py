@@ -65,7 +65,7 @@ def get_tags(tagList, flag="ner"):
     return tagList
 
 
-def get_single_tags(tagList, category="LOC"):
+def get_single_tags(tag_list, category="LOC"):
     """
     generate the single tag list
     """
@@ -81,28 +81,27 @@ def get_single_tags(tagList, category="LOC"):
     if category == "TO":
         tag_dict = {"O": 0, "B-T:": 1, "I-T:": 2}
     tag_keys = list(tag_dict.keys())
-    for i in range(len(tagList)):
-        tagList[i] = tagList[i].split()
-        for j in range(len(tagList[i])):
+    for i in range(len(tag_list)):
+        tag_list[i] = tag_list[i].split(" ")
+        for j in range(len(tag_list[i])):
             for index in range(len(tag_keys)):
-                if str(tagList[i][j]).__contains__(f"{tag_keys[index] + '-'}"):
-                    tagList[i][j] = tag_dict[f"{tag_keys[index]}"]
+                if str(tag_list[i][j]).__contains__(f"{tag_keys[index] + '-'}"):
+                    tag_list[i][j] = tag_dict[f"{tag_keys[index]}"]
     # how to deal with X
-    for i in range(len(tagList)):
-        for j in range(len(tagList[i])):
-            if isinstance(tagList[i][j], str) and tagList[i][j].__contains__("X-"):
-                tagList[i][j] = tagList[i][j - 1]
-    return tagList
+    for i in range(len(tag_list)):
+        for j in range(len(tag_list[i])):
+            if isinstance(tag_list[i][j], str) and tag_list[i][j].__contains__("X-"):
+                tag_list[i][j] = tag_list[i][j - 1]
+    return tag_list
 
 def get_negative_tags(tagList, category="LOC"):
     """
     generate the negative samples (tags)
     """
     negative_tags = get_single_tags(tagList, category)
-    position = 1
-    for i in range(position):
-        tmp = negative_tags.pop(i)
-        negative_tags.append(tmp)
+    for i in range(len(negative_tags)):
+        tmp = negative_tags[i].pop(0)
+        negative_tags[i].append(tmp)
     return negative_tags
 
 
@@ -113,7 +112,7 @@ def data_split(full_list, ratio, shuffle=False):
     n_total = len(full_list)
     offset = int(n_total * ratio)
     if n_total == 0 or offset < 1:
-        return [], full_list
+        return full_list, full_list
     if shuffle:
         random.shuffle(full_list)
     sublist_1 = full_list[:offset]
@@ -139,32 +138,30 @@ def main():
         os.makedirs(samples_path, exist_ok=True)
         os.makedirs(neg_samples_path, exist_ok=True)
         raw_files = get_files_path(data_path)
-        random_files = []
+        # random_files = []
 
         for file in range(len(raw_files)):
-            pd_reader = pd.read_csv(raw_files[file], header=None)[1].tolist()
+            pd_reader = pd.read_csv(raw_files[file], header=None)[1].tolist() # only use column 2
             token_list = pd_reader.copy()
             tag_list = pd_reader.copy()
             neg_tag_list = pd_reader.copy()
             category = raw_files[file].split("_")[-1].replace(".csv", "")
+
             tokens = get_pure_tokens(token_list, category)  # get the pure tokens
             tags = get_single_tags(tag_list, category)  # get the tags
             negative_tags = get_negative_tags(neg_tag_list, category)
 
             # save json file
-            samples = []
-            negative_samples = []
+            samples, negative_samples = [], []
             for i in range(len(tokens)):
                 samples.append({'tokens': tokens[i], f"{task}_tags": tags[i]})
                 negative_samples.append({'tokens': tokens[i], f"{task}_tags": negative_tags[i]})
 
             # down-sampling
-            train_samples, eval_samples = data_split(samples, 0.7, shuffle=True)
-            train_neg_samples, eval_neg_samples = data_split(negative_samples, 0.7, shuffle=True)
-            train_samples = {"data": train_samples}
-            eval_samples = {"data": eval_samples}
-            train_neg_samples = {"data": train_neg_samples}
-            eval_neg_samples = {"data": eval_neg_samples}
+            train_samples, eval_samples = data_split(samples, 0.8, shuffle=True)
+            train_neg_samples, eval_neg_samples = data_split(negative_samples, 0.8, shuffle=True)
+            train_samples, eval_samples = {"data": train_samples}, {"data": eval_samples}
+            train_neg_samples, eval_neg_samples = {"data": train_neg_samples}, {"data": eval_neg_samples}
 
             # save samples for each labels without data_split
             json_file = raw_files[file].split('/')[-1].replace(".csv", "")
@@ -174,8 +171,8 @@ def main():
             dump_json(eval_neg_samples, os.path.join(neg_samples_path, f"{json_file}_eval.json"))
             print(f"The {task}/{json_file} dataset corresponding single files have been saved...")
 
-            # save the mixed tags
-            random_files.extend(samples)
+            # # save the mixed tags
+            # random_files.extend(samples)
 
 
 if __name__ == "__main__":
