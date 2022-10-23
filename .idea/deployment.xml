@@ -5,7 +5,7 @@
       <paths name="Dartmouth">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/yuansui/eval-probing" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/home/yuansui/paper-revision" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

@@ -1,6 +1,5 @@
 import os.path
 
-
 class DataConfig:
     def __init__(self):
         self.data_path = "//home/weicheng/data_interns/yuan/datasets"
@@ -24,4 +23,7 @@ class DataConfig:
 class ModelConfig:
     def __init__(self, args):
         self.task = args.task
+
+
+
 
