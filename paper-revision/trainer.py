@@ -1,5 +1,7 @@
-import logging
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "3" # set the cuda card 2,3,4,5
+
+import logging
 
 import numpy as np
 import pandas as pd
@@ -14,6 +16,8 @@ from tqdm import tqdm
 from model import MBertLayerWise, MBertHeadWise, XLMRHeadWise, XLMRLayerWise
 from dataloader import DEFALT_DATASETS
 from config import LoggerConfig
+
+from sklearn.metrics import f1_score
 
 
 class TrainerConfig:
@@ -48,43 +52,94 @@ class EvalTrainer(TrainerConfig):
 
     def train(self, args):
         final_score = []
-        for i in range(self.loop_size):  # i refers to head or layer
-            if self.mode == "layer-wise":
-                self.model = MBertLayerWise(args) if args.model_config == "M-BERT" else XLMRLayerWise(args)
-            elif self.mode == "head-wise":
-                self.model = MBertHeadWise(args) if args.model_config == "M-BERT" else XLMRHeadWise(args)
-            self.model.to(self.device)
-            criterion = nn.CrossEntropyLoss(ignore_index=-100)  # remove special token
-            optimizer = torch.optim.Adam(
-                filter(lambda p: p.requires_grad, self.model.parameters()),  # only update the fc parameters (classifier)
-                lr=self.lr,
-            )
-            optimizer.zero_grad()  # make sure each layer's optimizer set to zero grad
-            for epoch in range(1, self.epochs + 1):
-                for idx, (train_batches, labels) in enumerate(self.dataloader['train']):
-                    optimizer.zero_grad()
-                    input_ids = train_batches["input_ids"].to(self.device)
-                    attention_mask = train_batches["attention_mask"].to(self.device)
-                    labels = labels.to(self.device)
-                    outputs = self.model(input_ids, attention_mask)
-                    logits = outputs[i]
-                    preds = logits.permute(0, 2, 1).to(self.device)
-                    loss = criterion(preds, labels)
-                    loss.backward()
-                    optimizer.step()
-                    if idx % 5 == 0:
-                        self.logger.info(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
-                        wandb.log({
-                            "epoch": epoch,
-                            "batch": idx,
-                            "train/loss": loss.data,
-                            f"{self.mode}-th": i
-                        })
-            # torch.save(self.model.state_dict(), os.path.join(sample_config.checkpoints, f"{mode}_idx_{i}.pt"))
-            self.logger.info(f"{self.mode} {i} on {self.corpus} has been trained..")
-            self.logger.info(f"start to evaluate the model..")
-            eval_results = self.eval(i)
-            final_score.append(eval_results)
+        if self.corpus == "wikiann":
+            for i in range(self.loop_size):  # i refers to head or layer
+                if self.mode == "layer-wise":
+                    self.model = MBertLayerWise(args) if args.model_config == "M-BERT" else XLMRLayerWise(args)
+                elif self.mode == "head-wise":
+                    self.model = MBertHeadWise(args) if args.model_config == "M-BERT" else XLMRHeadWise(args)
+                self.model.to(self.device)
+                criterion = nn.CrossEntropyLoss(ignore_index=-100).to(self.device)  # remove special token
+                optimizer = torch.optim.Adam(
+                    filter(lambda p: p.requires_grad, self.model.parameters()),  # only update the fc parameters (classifier)
+                    lr=self.lr,
+                )
+                optimizer.zero_grad()  # make sure each layer's optimizer set to zero grad
+                for epoch in range(1, self.epochs + 1):
+                    for idx, (train_batches, labels) in enumerate(self.dataloader['train']):
+                        optimizer.zero_grad()
+                        input_ids = train_batches["input_ids"].to(self.device)
+                        attention_mask = train_batches["attention_mask"].to(self.device)
+                        labels = labels.to(self.device)
+                        outputs = self.model(input_ids, attention_mask)
+                        logits = outputs[i]
+                        preds = logits.permute(0, 2, 1).to(self.device)
+                        loss = criterion(preds, labels)
+                        loss.backward()
+                        optimizer.step()
+                        if idx % 50 == 0:
+                            self.logger.info(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
+                            wandb.log({
+                                "epoch": epoch,
+                                "batch": idx,
+                                "train/loss": loss.data,
+                                f"{self.mode}-th": i
+                            })
+                # torch.save(self.model.state_dict(), os.path.join(sample_config.checkpoints, f"{mode}_idx_{i}.pt"))
+                self.logger.info(f"{self.mode} {i} on {self.corpus} has been trained..")
+                self.logger.info(f"start to evaluate the model..")
+                eval_results = self.eval(i)
+                self.logger.info(f"{self.corpus}/{self.lang} Performance of the {i}th is:")
+                self.logger.info(f"{self.corpus}/{self.lang} precision: {eval_results['overall_precision']}")
+                self.logger.info(f"{self.corpus}/{self.lang} Recall: {eval_results['overall_recall']}")
+                self.logger.info(f"{self.corpus}/{self.lang} F1, {eval_results['overall_f1']}")
+                self.logger.info(f"{self.corpus}/{self.lang} Accuracy, {eval_results['overall_accuracy']}")
+
+                final_score.append(eval_results)
+
+        elif self.corpus == "xnli" or self.corpus == "pawsx":
+            for i in range(self.loop_size):  # i refers to head or layer
+                if self.mode == "layer-wise":
+                    self.model = MBertLayerWise(args) if args.model_config == "M-BERT" else XLMRLayerWise(args)
+                elif self.mode == "head-wise":
+                    self.model = MBertHeadWise(args) if args.model_config == "M-BERT" else XLMRHeadWise(args)
+                self.model.to(self.device)
+                criterion = nn.CrossEntropyLoss().to(self.device)
+                optimizer = torch.optim.Adam(
+                    filter(lambda p: p.requires_grad, self.model.parameters()),  # only update the fc parameters (classifier)
+                    lr=self.lr,
+                )
+                optimizer.zero_grad()  # make sure each layer's optimizer set to zero grad
+                for epoch in range(1, self.epochs + 1):
+                    for idx, (train_batches, labels) in enumerate(self.dataloader['train']):
+                        optimizer.zero_grad()
+                        input_ids = train_batches["input_ids"].to(self.device)
+                        attention_mask = train_batches["attention_mask"].to(self.device)
+                        labels = labels.to(self.device)
+                        outputs = self.model(input_ids, attention_mask)
+                        logits = outputs[i]
+                        # adapt to the nn.crossentropy, inputs = [batch_size, nb_classes, *additional_dims];
+                        # target in the shape [batch_size, *additional_dims]
+                        preds = logits.permute(0, 2, 1)[:,:, 0].to(self.device) # use CLS to represent all the tokens representation
+                        loss = criterion(preds, labels)
+                        loss.backward()
+                        optimizer.step()
+                        if idx % 50 == 0:
+                            self.logger.info(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
+                            wandb.log({
+                                "epoch": epoch,
+                                "batch": idx,
+                                "train/loss": loss.data,
+                                f"{self.mode}-th": i
+                            })
+                # torch.save(self.model.state_dict(), os.path.join(sample_config.checkpoints, f"{mode}_idx_{i}.pt"))
+                self.logger.info(f"{self.mode} {i} on {self.corpus} has been trained..")
+                self.logger.info(f"start to evaluate the model..")
+                eval_results = self.eval(i)
+                self.logger.info(f"{self.corpus}/{self.lang} Performance of the {i}th is:")
+                self.logger.info(f"{self.corpus}/{self.lang} F1, {eval_results}")
+
+                final_score.append(eval_results)
 
         # Save the evaluation
         self.logger.info(f"save the evaluation score to {self.corpus}/{self.lang}.csv")
@@ -194,12 +249,12 @@ class EvalTrainer(TrainerConfig):
                     attention_mask = example_batched["attention_mask"].to(self.device)
                     labels = labels.int().to(self.device)  # use int()
                     outputs = self.model(input_ids, attention_mask)
-                    logits = outputs[index]  # CLS
-                    preds = torch.argmax(logits, dim=2).int().to(self.device)  # use int()
-                    f1_score = f1_score(labels.numpy(), preds.numpy(), average='micro')
-                    results.append(f1_score)
+                    logits = outputs[index][:,0,:]  # CLS
+                    preds = torch.argmax(logits, dim=1).int().to(self.device)  # use int()
+                    f1 = f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average='micro')
+                    results.append(f1)
                 logger.info(f"{self.mode} {index} on {self.lang} has been evaluated..")
-                return results
+                return sum(results) / sum(results)
 
 
 

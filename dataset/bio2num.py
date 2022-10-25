@@ -1,8 +1,13 @@
 import json
+import logging
 import random
 import os
 import pandas as pd
 from config import DataConfig
+
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
+                    datefmt='%m/%d/%Y %H:%M:%S',
+                    level=logging.INFO)
 
 def get_files_path(filePath):
     """
@@ -129,9 +134,11 @@ def dump_json(obj, file_name, default=None):
 
 
 def main():
+    logger = logging.getLogger("Dataset ()")
+    logger.info("Preparation Starts..")
     sample_config = DataConfig()
     for task in sample_config.corpus:
-        print(f"Start to generate {task} datasets...")
+        logger.info(f"Start to generate {task} datasets...")
         data_path = os.path.join(sample_config.data_path, f"{task}", "data")
         samples_path = os.path.join(sample_config.data_path, f"{task}", "samples")
         neg_samples_path = os.path.join(sample_config.data_path, f"{task}", "neg_samples")
@@ -158,8 +165,10 @@ def main():
                 negative_samples.append({'tokens': tokens[i], f"{task}_tags": negative_tags[i]})
 
             # down-sampling
-            train_samples, eval_samples = data_split(samples, 0.8, shuffle=True)
-            train_neg_samples, eval_neg_samples = data_split(negative_samples, 0.8, shuffle=True)
+            train_samples, eval_samples = data_split(samples, 0.7, shuffle=True)
+            train_neg_samples, eval_neg_samples = data_split(negative_samples, 0.7, shuffle=True)
+            logger.info(f"Positive sets have {len(train_samples)} training samples and {len(eval_samples)} evaluation samples")
+            logger.info(f"Negative sets have {len(train_neg_samples)} training samples and {len(eval_neg_samples)} evaluation samples")
             train_samples, eval_samples = {"data": train_samples}, {"data": eval_samples}
             train_neg_samples, eval_neg_samples = {"data": train_neg_samples}, {"data": eval_neg_samples}
 
@@ -169,10 +178,7 @@ def main():
             dump_json(eval_samples, os.path.join(samples_path, f"{json_file}_eval.json"))
             dump_json(train_neg_samples, os.path.join(neg_samples_path, f"{json_file}_train.json"))
             dump_json(eval_neg_samples, os.path.join(neg_samples_path, f"{json_file}_eval.json"))
-            print(f"The {task}/{json_file} dataset corresponding single files have been saved...")
-
-            # # save the mixed tags
-            # random_files.extend(samples)
+            logger.info(f"The {task}/{json_file} dataset corresponding single files have been saved...")
 
 
 if __name__ == "__main__":

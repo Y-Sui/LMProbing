@@ -78,8 +78,12 @@ class EvaluationProbing(DataConfig):
         pass
 
     def collote_fn(self, fn):
-        collate_fns = {"xnli": self.collote_xnli, "paws-x": self.collote_paswx, "wikiann": self.collote_wikiann,
-                       "universal_dependencies": self.collote_ud}
+        collate_fns = {
+            "xnli": self.collote_xnli,
+            "paws-x": self.collote_paswx,
+            "wikiann": self.collote_wikiann,
+            "universal_dependencies": self.collote_ud
+        }
         return collate_fns.get(fn)
 
     def get_dataloader(self):
