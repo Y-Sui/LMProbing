@@ -4,6 +4,7 @@ import torch
 from datasets import load_dataset, DatasetDict
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer
+from model import DEFAULT_MODEL_NAMES
 
 DEFALT_DATASETS = {"xnli": "xnli", "pawsx":"paws-x", "wikiann": "wikiann", "ud": "universal_dependencies"}
 DEFALT_LANGUAGES = {
@@ -12,8 +13,9 @@ DEFALT_LANGUAGES = {
     "wikiann": ['ace', 'af', 'als', 'am', 'an', 'ang', 'ar', 'arc', 'arz', 'as', 'ast', 'ay', 'az', 'ba', 'bar', 'bat-smg', 'be', 'be-x-old', 'bg', 'bh', 'bn', 'bo', 'br', 'bs', 'ca', 'cbk-zam', 'cdo', 'ce', 'ceb', 'ckb', 'co', 'crh', 'cs', 'csb', 'cv', 'cy', 'da', 'de', 'diq', 'dv', 'el', 'eml', 'en', 'eo', 'es', 'et', 'eu', 'ext', 'fa', 'fi', 'fiu-vro', 'fo', 'fr', 'frr', 'fur', 'fy', 'ga', 'gan', 'gd', 'gl', 'gn', 'gu', 'hak', 'he', 'hi', 'hr', 'hsb', 'hu', 'hy', 'ia', 'id', 'ig', 'ilo', 'io', 'is', 'it', 'ja', 'jbo', 'jv', 'ka', 'kk', 'km', 'kn', 'ko', 'ksh', 'ku', 'ky', 'la', 'lb', 'li', 'lij', 'lmo', 'ln', 'lt', 'lv', 'map-bms', 'mg', 'mhr', 'mi', 'min', 'mk', 'ml', 'mn', 'mr', 'ms', 'mt', 'mwl', 'my', 'mzn', 'nap', 'nds', 'ne', 'nl', 'nn', 'no', 'nov', 'oc', 'or', 'os', 'pa', 'pdc', 'pl', 'pms', 'pnb', 'ps', 'pt', 'qu', 'rm', 'ro', 'ru', 'rw', 'sa', 'sah', 'scn', 'sco', 'sd', 'sh', 'si', 'simple', 'sk', 'sl', 'so', 'sq', 'sr', 'su', 'sv', 'sw', 'szl', 'ta', 'te', 'tg', 'th', 'tk', 'tl', 'tr', 'tt', 'ug', 'uk', 'ur', 'uz', 'vec', 'vep', 'vi', 'vls', 'vo', 'wa', 'war', 'wuu', 'xmf', 'yi', 'yo', 'zea', 'zh', 'zh-classical', 'zh-min-nan', 'zh-yue'],
     "ud": ['af_afribooms', 'akk_pisandub', 'akk_riao', 'aqz_tudet', 'sq_tsa', 'am_att', 'grc_perseus', 'grc_proiel', 'apu_ufpa', 'ar_nyuad', 'ar_padt', 'ar_pud', 'hy_armtdp', 'aii_as', 'bm_crb', 'eu_bdt', 'be_hse', 'bho_bhtb', 'br_keb', 'bg_btb', 'bxr_bdt', 'yue_hk', 'ca_ancora', 'zh_cfl', 'zh_gsd', 'zh_gsdsimp', 'zh_hk', 'zh_pud', 'ckt_hse', 'lzh_kyoto', 'cop_scriptorium', 'hr_set', 'cs_cac', 'cs_cltt', 'cs_fictree', 'cs_pdt', 'cs_pud', 'da_ddt', 'nl_alpino', 'nl_lassysmall', 'en_esl', 'en_ewt', 'en_gum', 'en_gumreddit', 'en_lines', 'en_partut', 'en_pronouns', 'en_pud', 'myv_jr', 'et_edt', 'et_ewt', 'fo_farpahc', 'fo_oft', 'fi_ftb', 'fi_ood', 'fi_pud', 'fi_tdt', 'fr_fqb', 'fr_ftb', 'fr_gsd', 'fr_partut', 'fr_pud', 'fr_sequoia', 'fr_spoken', 'gl_ctg', 'gl_treegal', 'de_gsd', 'de_hdt', 'de_lit', 'de_pud', 'got_proiel', 'el_gdt', 'he_htb', 'qhe_hiencs', 'hi_hdtb', 'hi_pud', 'hu_szeged', 'is_icepahc', 'is_pud', 'id_csui', 'id_gsd', 'id_pud', 'ga_idt', 'it_isdt', 'it_partut', 'it_postwita', 'it_pud', 'it_twittiro', 'it_vit', 'ja_bccwj', 'ja_gsd', 'ja_modern', 'ja_pud', 'krl_kkpp', 'kk_ktb', 'kfm_aha', 'koi_uh', 'kpv_ikdp', 'kpv_lattice', 'ko_gsd', 'ko_kaist', 'ko_pud', 'kmr_mg', 'la_ittb', 'la_llct', 'la_perseus', 'la_proiel', 'lv_lvtb', 'lt_alksnis', 'lt_hse', 'olo_kkpp', 'mt_mudt', 'gv_cadhan', 'mr_ufal', 'gun_dooley', 'gun_thomas', 'mdf_jr', 'myu_tudet', 'pcm_nsc', 'nyq_aha', 'sme_giella', 'no_bokmaal', 'no_nynorsk', 'no_nynorsklia', 'cu_proiel', 'fro_srcmf', 'orv_rnc', 'orv_torot', 'otk_tonqq', 'fa_perdt', 'fa_seraji', 'pl_lfg', 'pl_pdb', 'pl_pud', 'pt_bosque', 'pt_gsd', 'pt_pud', 'ro_nonstandard', 'ro_rrt', 'ro_simonero', 'ru_gsd', 'ru_pud', 'ru_syntagrus', 'ru_taiga', 'sa_ufal', 'sa_vedic', 'gd_arcosg', 'sr_set', 'sms_giellagas', 'sk_snk', 'sl_ssj', 'sl_sst', 'soj_aha', 'ajp_madar', 'es_ancora', 'es_gsd', 'es_pud', 'swl_sslc', 'sv_lines', 'sv_pud', 'sv_talbanken', 'gsw_uzh', 'tl_trg', 'tl_ugnayan', 'ta_mwtt', 'ta_ttb', 'te_mtg', 'th_pud', 'tpn_tudet', 'qtd_sagt', 'tr_boun', 'tr_gb', 'tr_imst', 'tr_pud', 'uk_iu', 'hsb_ufal', 'ur_udtb', 'ug_udt', 'vi_vtb', 'wbp_ufal', 'cy_ccg', 'wo_wtb', 'yo_ytb'],
 }
-DEFALT_NUM_LABELS = {"xnli": 2, "pawsx":2, "wikiann": 7, "ud": 5}
-TAG_DICT_WIKIANN = {"O": 0, "1": "B-PER", "2": "I-PER", "3": "B-ORG", "4": "I-ORG", "5": "B-LOC", "6": "I-LOC"}
+DEFALT_NUM_LABELS = {"xnli": 3, "pawsx":2, "wikiann": 3, "ud": 5}
+TAG_DICT_WIKIANN = {"0": "0", "1": "B-PER", "2": "I-PER", "3": "B-ORG", "4": "I-ORG", "5": "B-LOC", "6": "I-LOC"}
+TAG_DICT = {"PER": [1, 2], "ORG": [3, 4], "LOC": [5, 6]}
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
@@ -23,6 +25,7 @@ class DataConfig:
     def __init__(self, args):
         self.corpus = DEFALT_DATASETS[args.corpus]
         self.lang = args.lang # or subset
+        self.tag_class = args.tag_class
         self.tokenizer_config = args.tokenizer_config
         self.max_length = args.max_length
         self.batch_size = args.batch_size
@@ -32,8 +35,11 @@ class EvaluationProbing(DataConfig):
         super().__init__(args)
         self.logger = logging.getLogger("EvalDataloader")
         self.logger.info(vars(args))
-        self.dataset = load_dataset(self.corpus, self.lang)
-        self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_config)
+        if self.corpus != "wikiann":
+            self.dataset = load_dataset(self.corpus, self.lang)
+        else:
+            self.dataset = self.load_dataset_wikiann()
+        self.tokenizer = AutoTokenizer.from_pretrained(DEFAULT_MODEL_NAMES[self.tokenizer_config])
 
     def collote_xnli(self, batch_samples):
         """
@@ -67,12 +73,30 @@ class EvaluationProbing(DataConfig):
         """
         wikiann, ner task
         """
-        tokens, ner_tags = [], []
+        tokens, ner_tags, align_ner_tags = [], [], []
         for sample in batch_samples:
             tokens.append(sample["tokens"])
             ner_tags.append(sample["ner_tags"])
-        return self.tokenizer(tokens, is_split_into_words=True, padding="max_length", max_length=self.max_length, truncation=True, return_tensors="pt"), \
-               torch.tensor(ner_tags)
+        # drop out other features
+        for _ in range(len(ner_tags)):
+            for index, value in enumerate(ner_tags[_]):
+                if value not in TAG_DICT[self.tag_class]:
+                    ner_tags[_][index] = 0
+        tokenized_inputs = self.tokenizer(tokens, is_split_into_words=True, padding="max_length", max_length=self.max_length, truncation=True, return_tensors="pt")
+        for i, tag in enumerate(ner_tags):
+            word_ids = tokenized_inputs.word_ids(batch_index=i)
+            previous_word_idx = None
+            tag_ids = []
+            for word_idx in word_ids:
+                if word_idx is None:
+                    tag_ids.append(-100)
+                elif word_idx != previous_word_idx:
+                    tag_ids.append(tag[word_idx])
+                else:
+                    tag_ids.append(-100)
+                previous_word_idx = word_idx
+            align_ner_tags.append(tag_ids)
+        return tokenized_inputs, torch.tensor(align_ner_tags)
 
     def collote_ud(self, batch_samples):
         pass
@@ -85,6 +109,15 @@ class EvaluationProbing(DataConfig):
             "universal_dependencies": self.collote_ud
         }
         return collate_fns.get(fn)
+
+    def load_dataset_wikiann(self):
+        """tag_class split"""
+        wikiann_dataset = load_dataset(self.corpus, self.lang)
+        for set in ['train', 'validation', 'test']:
+            wikiann_dataset[set] = wikiann_dataset[set].filter(
+                lambda x: "".join(x['spans']).__contains__(self.tag_class)
+            )
+        return DatasetDict({"train": wikiann_dataset["train"], "validation": wikiann_dataset["validation"], "test": wikiann_dataset["test"]})
 
     def get_dataloader(self):
         """
@@ -101,6 +134,7 @@ class EvaluationProbing(DataConfig):
         self.logger.info(f"batch_label_shape: {batch_label.shape}")
 
         return dataloader
+
 
 def main():
     pass

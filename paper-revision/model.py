@@ -12,10 +12,11 @@ class LayerWiseConfig(nn.Module):
         super().__init__()
         self.max_length = args.max_length
         self.batch_size = args.batch_size
-        self.embed_size = args.embed_size
+        self.embed_size = DEFAULT_EMBED_SIZE[args.embed_size]
         self.classifier_num = args.classifier_num
         self.model = DEFAULT_MODEL_NAMES[args.model_config]
         self.num_labels = args.num_labels
+        self.fc = args.fc
 
     def forward(self, input_ids, attention_mask):
         backbone = self.backbone(input_ids=input_ids,
@@ -36,7 +37,7 @@ class HeadWiseConfig(nn.Module):
         super().__init__()
         self.max_length = args.max_length
         self.batch_size = args.batch_size
-        self.embed_size = args.embed_size
+        self.embed_size = DEFAULT_EMBED_SIZE[args.embed_size]
         self.classifier_num = args.classifier_num
         self.model = DEFAULT_MODEL_NAMES[args.model_config]
         self.num_labels = args.num_labels
@@ -62,8 +63,9 @@ class MBertLayerWise(LayerWiseConfig):
     def __init__(self, args):
         super().__init__(args)
         self.backbone = AutoModel.from_pretrained(self.model)
-        for p in self.backbone.parameters():
-            p.requires_grad = False  # freeze the backbone model
+        if self.fc == "probing":
+            for p in self.backbone.parameters():
+                p.requires_grad = False  # freeze the backbone model
         self.last_hidden_state_size = self._get_last_hidden_state_size()
         self.classifier = nn.Sequential(
             nn.Linear(self.last_hidden_state_size, self.embed_size),
@@ -77,8 +79,9 @@ class MBertHeadWise(HeadWiseConfig):
         self.backbone = AutoModel.from_pretrained(self.model)
         self.num_heads = self.backbone.config.num_attention_heads
         self.last_hidden_state_size = self._get_last_hidden_state_size()
-        for p in self.backbone.parameters():
-            p.requires_grad = False  # freeze the backbone model
+        if self.fc == "probing":
+            for p in self.backbone.parameters():
+                p.requires_grad = False  # freeze the backbone model
         self.classifier = nn.Sequential(
             nn.Linear(self.last_hidden_state_size, self.embed_size),
             nn.Dropout(0.5),
@@ -89,8 +92,9 @@ class XLMRLayerWise(LayerWiseConfig):
     def __init__(self, args):
         super().__init__(args)
         self.backbone = AutoModel.from_pretrained(self.model)
-        for p in self.backbone.parameters():
-            p.requires_grad = False  # freeze the backbone model
+        if self.fc == "probing":
+            for p in self.backbone.parameters():
+                p.requires_grad = False  # freeze the backbone model
         self.last_hidden_state_size = self._get_last_hidden_state_size()
         self.classifier = nn.Sequential(
             nn.Linear(self.last_hidden_state_size, self.embed_size),
@@ -104,8 +108,9 @@ class XLMRHeadWise(HeadWiseConfig):
         self.backbone = AutoModel.from_pretrained(self.model)
         self.num_heads = self.backbone.config.num_attention_heads
         self.last_hidden_state_size = self._get_last_hidden_state_size()
-        for p in self.backbone.parameters():
-            p.requires_grad = False  # freeze the backbone model
+        if self.fc == "probing":
+            for p in self.backbone.parameters():
+                p.requires_grad = False  # freeze the backbone model
         self.classifier = nn.Sequential(
             nn.Linear(self.last_hidden_state_size, self.embed_size),
             nn.Dropout(0.5),

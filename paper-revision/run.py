@@ -1,5 +1,7 @@
 import os
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "3" # set the cuda card 2,3,4,5
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import argparse
 import logging
@@ -21,10 +23,12 @@ def get_arguments():
     parser.add_argument("--tokenizer_config", default="bert-base-multilingual-cased", choices=DEFAULT_MODEL_NAMES.keys(), type=str,
                         help="Name of the pretrained tokenizer")
     parser.add_argument("--corpus", default="pawsx", choices=DEFALT_DATASETS.keys(), type=str)
-    parser.add_argument("--lang", default="en", choices=DEFALT_LANGUAGES.values(), type=str)
-    parser.add_argument("--embed_size", default=256, choices=DEFAULT_EMBED_SIZE, type=int)
+    parser.add_argument("--lang", default="en", type=str)
+    parser.add_argument("--tag_class", default="PER", type=str, choices=["PER", "LOC", "ORG"], help="only work when the corpus sets to wikiann")
+    parser.add_argument("--embed_size", default="large", choices=DEFAULT_EMBED_SIZE.keys(), type=str)
     parser.add_argument("--classifier_num", default=2, choices=[1,2,3,4,5], type=int)
     parser.add_argument("--max_length", default=100, type=int, help="Max length of the tokenization")
+    parser.add_argument("--fc", default="probing", type=str, choices=['probing', 'finetune'], help="choose which training strategies will be applied")
 
     # Options parameters
     parser.add_argument("--cache_dir", default=None, type=str,
@@ -43,11 +47,28 @@ def get_arguments():
     # Setup devices (No distributed training here)
     args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
     args.num_labels = DEFALT_NUM_LABELS[args.corpus]
+
     return args
 
 def main(args):
     logger = logging.getLogger("Run()")
     dataloader = EvaluationProbing(args).get_dataloader()
+    if args.lang not in DEFALT_LANGUAGES[args.corpus]:
+        logger.info("Error language/subset setting")
+        exit()
+    else:
+        logger.info(dataloader) # drop off languages/subsets with less than 100 instances
+        try:
+            if len(dataloader) == 3:
+                instances = len(dataloader['train']) + len(dataloader['validation']) + len(dataloader['test'])
+            else:
+                instances = len(dataloader['test'])
+        except:
+            logger.info("Error")
+    if instances < 100:
+        logger.info(f"{args.lang} has less than 100 instances, drop off from the training process")
+        exit()
+
     # wandb init
     project = 'Eval Probing'
     entity = 'yuansui'
@@ -56,6 +77,7 @@ def main(args):
     wandb.init(reinit=True, project=project, entity=entity,
                name=display_name, group=group, tags=["train & eval"])
     wandb.config["args"] = vars(args)
+
     EvalTrainer(args, dataloader, TAG_DICT_WIKIANN).train(args)
 
 
