@@ -40,6 +40,7 @@ class EvaluationProbing(DataConfig):
         else:
             self.dataset = self.load_dataset_wikiann()
         self.tokenizer = AutoTokenizer.from_pretrained(DEFAULT_MODEL_NAMES[self.tokenizer_config])
+        self.pad_token_id = self.tokenizer.pad_token_id
 
     def collote_xnli(self, batch_samples):
         """
@@ -129,6 +130,7 @@ class EvaluationProbing(DataConfig):
             dataloader[set] = DataLoader(self.dataset[set], batch_size=self.batch_size, shuffle=True, collate_fn=collote_fn)
         self.logger.info(dataloader)
         batch_corpus, batch_label = next(iter(dataloader["train"]))
+        self.logger.info(f"tokenizer_pad_token_id: {self.pad_token_id}")
         batch_corpus_shape = {k: v.shape for k, v in batch_corpus.items()}
         self.logger.info(f"batch_corpus_shape: {batch_corpus_shape}")
         self.logger.info(f"batch_label_shape: {batch_label.shape}")

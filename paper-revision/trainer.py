@@ -33,12 +33,15 @@ class TrainerConfig:
         self.label_list = label_list
         self.mode = args.mode
         self.tag_class = args.tag_class
+        self.pad_token_id = args.pad_token_id
+        self.fc = args.fc
 
 class EvalTrainer(TrainerConfig):
     def __init__(self, args, dataloader, label_list):
         super().__init__(args, dataloader, label_list)
         self.sample_config = LoggerConfig()
         self.logging_path = os.path.join(self.sample_config.logging_path, self.corpus, f"{self.model_config}_{self.mode}")
+        self.model_path = os.path.join(self.sample_config.checkpoints, self.corpus, f"{self.model_config}_{self.mode}_{self.fc}")
         self.logger = logging.getLogger("Train()")
         if self.mode == "layer-wise":
             self.model = MBertLayerWise(args) if args.model_config == "M-BERT" else XLMRLayerWise(args)
@@ -60,7 +63,7 @@ class EvalTrainer(TrainerConfig):
                 elif self.mode == "head-wise":
                     self.model = MBertHeadWise(args) if args.model_config == "M-BERT" else XLMRHeadWise(args)
                 self.model.to(self.device)
-                criterion = nn.CrossEntropyLoss(ignore_index=-100).to(self.device)  # remove special token
+                criterion = nn.CrossEntropyLoss(ignore_index=self.pad_token_id).to(self.device)  # remove special token
                 optimizer = torch.optim.Adam(
                     filter(lambda p: p.requires_grad, self.model.parameters()),  # only update the fc parameters (classifier)
                     lr=self.lr,
@@ -78,10 +81,11 @@ class EvalTrainer(TrainerConfig):
                         loss = criterion(preds, labels)
                         loss.backward()
                         optimizer.step()
-                        if idx % 50 == 0:
+                        if idx % 500 == 0:
                             self.logger.info(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
                             wandb.log({"epoch": epoch, "batch": idx, "train/loss": loss.data, f"{self.mode}-th": i})
-                # torch.save(self.model.state_dict(), os.path.join(sample_config.checkpoints, f"{mode}_idx_{i}.pt"))
+
+                torch.save(self.model.state_dict(), os.path.join(self.model_path, f"{self.fc}_{self.mode}_idx_{i}.pt"))
                 self.logger.info(f"{self.mode} {i} on {self.corpus} has been trained..")
                 self.logger.info(f"start to evaluate the model..")
                 eval_results = self.eval(i)
@@ -100,7 +104,7 @@ class EvalTrainer(TrainerConfig):
                 elif self.mode == "head-wise":
                     self.model = MBertHeadWise(args) if args.model_config == "M-BERT" else XLMRHeadWise(args)
                 self.model.to(self.device)
-                criterion = nn.CrossEntropyLoss().to(self.device)
+                criterion = nn.CrossEntropyLoss(ignore_index=self.pad_token_id).to(self.device)
                 optimizer = torch.optim.Adam(
                     filter(lambda p: p.requires_grad, self.model.parameters()),  # only update the fc parameters (classifier)
                     lr=self.lr,
@@ -120,7 +124,7 @@ class EvalTrainer(TrainerConfig):
                         loss = criterion(preds, labels)
                         loss.backward()
                         optimizer.step()
-                        if idx % 50 == 0:
+                        if idx % 500 == 0:
                             self.logger.info(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
                             wandb.log({"epoch": epoch, "batch": idx, "train/loss": loss.data, f"{self.mode}-th": i})
                 # torch.save(self.model.state_dict(), os.path.join(sample_config.checkpoints, f"{mode}_idx_{i}.pt"))
@@ -137,7 +141,7 @@ class EvalTrainer(TrainerConfig):
 
         if self.corpus == "wikiann":
             profile_logging = []
-            with open(os.path.join(self.logging_path, f"{self.lang}_{self.tag_class}_{self.mode}.csv"), "w") as file:
+            with open(os.path.join(self.logging_path, f"{self.fc}_{self.lang}_{self.tag_class}_{self.mode}.csv"), "w") as file:
                 acc, recall, f1, prec = [], [], [], []
                 for i in range(len(final_score)):
                     self.logger.info(f"{self.lang}-{self.tag_class} Performance of the {i}th is:")
@@ -167,7 +171,7 @@ class EvalTrainer(TrainerConfig):
 
         elif self.corpus == "xnli" or self.corpus == "pawsx":
             profile_logging = final_score
-            with open(os.path.join(self.logging_path, f"{self.lang}_{self.mode}.csv"), "w") as file:
+            with open(os.path.join(self.logging_path, f"{self.fc}_{self.lang}_{self.mode}.csv"), "w") as file:
                 for i in range(len(final_score)):
                     self.logger.info(f"{self.lang} Performance of the {i}th is:")
                     self.logger.info(f"{self.lang} F1, {final_score[i]}")

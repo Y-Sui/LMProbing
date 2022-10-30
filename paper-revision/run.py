@@ -52,7 +52,10 @@ def get_arguments():
 
 def main(args):
     logger = logging.getLogger("Run()")
-    dataloader = EvaluationProbing(args).get_dataloader()
+    evaluation_probing_loader = EvaluationProbing(args)
+    dataloader = evaluation_probing_loader.get_dataloader()
+    args.pad_token_id = evaluation_probing_loader.pad_token_id
+
     if args.lang not in DEFALT_LANGUAGES[args.corpus]:
         logger.info("Error language/subset setting")
         exit()
@@ -73,7 +76,7 @@ def main(args):
     project = 'Eval Probing'
     entity = 'yuansui'
     group = 'Paper-revision-layer-wise-and-head-wise'
-    display_name = f"corpus-[{args.corpus}/{args.lang}]-mode[{args.mode}]"
+    display_name = f"fc[{args.fc}]-corpus-[{args.corpus}]-lang-[{args.lang}]-mode[{args.mode}]"
     wandb.init(reinit=True, project=project, entity=entity,
                name=display_name, group=group, tags=["train & eval"])
     wandb.config["args"] = vars(args)
