@@ -85,8 +85,10 @@ class EvalTrainer(TrainerConfig):
                         if idx % 500 == 0:
                             self.logger.info(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
                             wandb.log({"epoch": epoch, "batch": idx, "train/loss": loss.data, f"{self.mode}-th": i})
-
-                torch.save(self.model.state_dict(), os.path.join(self.model_path, f"{self.fc}_{self.mode}_idx_{i}.pt"))
+                try:
+                    torch.save(self.model.state_dict(), os.path.join(self.model_path, f"{self.fc}_{self.mode}_idx_{i}.pt"))
+                except:
+                    self.logger.info(f"Model has not been saved due to some error")
                 self.logger.info(f"{self.mode} {i} on {self.corpus} has been trained..")
                 self.logger.info(f"start to evaluate the model..")
                 eval_results = self.eval(i)
@@ -128,7 +130,11 @@ class EvalTrainer(TrainerConfig):
                         if idx % 500 == 0:
                             self.logger.info(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
                             wandb.log({"epoch": epoch, "batch": idx, "train/loss": loss.data, f"{self.mode}-th": i})
-                # torch.save(self.model.state_dict(), os.path.join(sample_config.checkpoints, f"{mode}_idx_{i}.pt"))
+                try:
+                    torch.save(self.model.state_dict(),
+                               os.path.join(self.model_path, f"{self.fc}_{self.mode}_idx_{i}.pt"))
+                except:
+                    self.logger.info(f"Model has not been saved due to some error")
                 self.logger.info(f"{self.mode} {i} on {self.corpus} has been trained..")
                 self.logger.info(f"start to evaluate the model..")
                 eval_results = self.eval(i)
@@ -295,10 +301,10 @@ class EvalTrainer(TrainerConfig):
 
                     if i == 1:
                         confusion_matrix = confmat(preds, labels)
-                        f1 = f1_score(preds, labels, num_classes=self.num_labels)
+                        f1 = f1_score(preds, labels, num_classes=self.num_labels).cpu().numpy()
                     else:
                         confusion_matrix += confmat(preds, labels)
-                        f1 += f1_score(preds, labels, num_classes=self.num_labels)
+                        f1 += f1_score(preds, labels, num_classes=self.num_labels).cpu().numpy()
                 self.logger.info(f"(tn, fp; fn, tp): {confusion_matrix.ravel()}")
                 results.append(f1 / len(self.dataloader['test']))
 
