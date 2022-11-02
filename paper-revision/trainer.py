@@ -1,6 +1,9 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "3" # set the cuda card 2,3,4,5
 
+from torchmetrics import ConfusionMatrix
+from torchmetrics.functional import f1_score
+
 import logging
 
 import numpy as np
@@ -16,8 +19,6 @@ from tqdm import tqdm
 from model import MBertLayerWise, MBertHeadWise, XLMRHeadWise, XLMRLayerWise
 from dataloader import DEFALT_DATASETS
 from config import LoggerConfig
-
-from sklearn.metrics import f1_score
 
 
 class TrainerConfig:
@@ -35,6 +36,7 @@ class TrainerConfig:
         self.tag_class = args.tag_class
         self.pad_token_id = args.pad_token_id
         self.fc = args.fc
+        self.num_labels = args.num_labels
 
 class EvalTrainer(TrainerConfig):
     def __init__(self, args, dataloader, label_list):
@@ -53,7 +55,6 @@ class EvalTrainer(TrainerConfig):
             self.model = None
             self.loop_size = 0
             self.logger.info("Not Supported Mode!")
-
     def train(self, args):
         final_score = []
         if self.corpus == "wikiann":
@@ -141,44 +142,90 @@ class EvalTrainer(TrainerConfig):
 
         if self.corpus == "wikiann":
             profile_logging = []
-            with open(os.path.join(self.logging_path, f"{self.fc}_{self.lang}_{self.tag_class}_{self.mode}.csv"), "w") as file:
-                acc, recall, f1, prec = [], [], [], []
-                for i in range(len(final_score)):
-                    self.logger.info(f"{self.lang}-{self.tag_class} Performance of the {i}th is:")
-                    self.logger.info(f"{self.lang}-{self.tag_class} precision: {final_score[i]['overall_precision']}")
-                    self.logger.info(f"{self.lang}-{self.tag_class} Recall: {final_score[i]['overall_recall']}")
-                    self.logger.info(f"{self.lang}-{self.tag_class} F1, {final_score[i]['overall_f1']}")
-                    self.logger.info(f"{self.lang}-{self.tag_class} Accuracy, {final_score[i]['overall_accuracy']}")
+            try:
+                with open(os.path.join(self.logging_path, f"{self.fc}_{self.lang}_{self.tag_class}_{self.mode}.csv"), "w") as file:
+                    acc, recall, f1, prec = [], [], [], []
+                    for i in range(len(final_score)):
+                        self.logger.info(f"{self.lang}-{self.tag_class} Performance of the {i}th is:")
+                        self.logger.info(f"{self.lang}-{self.tag_class} precision: {final_score[i]['overall_precision']}")
+                        self.logger.info(f"{self.lang}-{self.tag_class} Recall: {final_score[i]['overall_recall']}")
+                        self.logger.info(f"{self.lang}-{self.tag_class} F1, {final_score[i]['overall_f1']}")
+                        self.logger.info(f"{self.lang}-{self.tag_class} Accuracy, {final_score[i]['overall_accuracy']}")
 
-                    wandb.log({
-                        f"valid/{self.lang}-{self.tag_class}/acc": final_score[i]['overall_accuracy'],
-                        f"valid/{self.lang}-{self.tag_class}/prec": final_score[i]['overall_precision'],
-                        f"valid/{self.lang}-{self.tag_class}/f1": final_score[i]['overall_f1'],
-                        f"valid/{self.lang}-{self.tag_class}/recall": final_score[i]['overall_recall'], f"{self.mode}-th": i
-                    })
+                        wandb.log({
+                            f"valid/{self.lang}-{self.tag_class}/acc": final_score[i]['overall_accuracy'],
+                            f"valid/{self.lang}-{self.tag_class}/prec": final_score[i]['overall_precision'],
+                            f"valid/{self.lang}-{self.tag_class}/f1": final_score[i]['overall_f1'],
+                            f"valid/{self.lang}-{self.tag_class}/recall": final_score[i]['overall_recall'], f"{self.mode}-th": i
+                        })
 
-                    acc.append(final_score[i]['overall_accuracy'])
-                    recall.append(final_score[i]['overall_recall'])
-                    f1.append(final_score[i]['overall_f1'])
-                    prec.append(final_score[i]['overall_precision'])
-                    # generate the heatmap according to the F1 score
-                    profile_logging.append(final_score[i]['overall_f1'])
+                        acc.append(final_score[i]['overall_accuracy'])
+                        recall.append(final_score[i]['overall_recall'])
+                        f1.append(final_score[i]['overall_f1'])
+                        prec.append(final_score[i]['overall_precision'])
+                        # generate the heatmap according to the F1 score
+                        profile_logging.append(final_score[i]['overall_f1'])
 
-                metric_frame = pd.DataFrame({f"{self.mode}": [i for i in range(len(final_score))],
-                                             "Accuracy": acc, "Precision": prec, "Recall": recall, "F1": f1})
-                metric_frame.to_csv(file, index=False, sep=",")
+                    metric_frame = pd.DataFrame({f"{self.mode}": [i for i in range(len(final_score))],
+                                                 "Accuracy": acc, "Precision": prec, "Recall": recall, "F1": f1})
+                    metric_frame.to_csv(file, index=False, sep=",")
+            except:
+                path = os.path.join(self.logging_path, f"{self.fc}_{self.lang}_{self.tag_class}_{self.mode}.csv")
+                self.logger.info(f"logging save path: {path}")
+                with open(path, "w") as file:
+                    acc, recall, f1, prec = [], [], [], []
+                    for i in range(len(final_score)):
+                        self.logger.info(f"{self.lang}-{self.tag_class} Performance of the {i}th is:")
+                        self.logger.info(
+                            f"{self.lang}-{self.tag_class} precision: {final_score[i]['overall_precision']}")
+                        self.logger.info(f"{self.lang}-{self.tag_class} Recall: {final_score[i]['overall_recall']}")
+                        self.logger.info(f"{self.lang}-{self.tag_class} F1, {final_score[i]['overall_f1']}")
+                        self.logger.info(f"{self.lang}-{self.tag_class} Accuracy, {final_score[i]['overall_accuracy']}")
+
+                        wandb.log({
+                            f"valid/{self.lang}-{self.tag_class}/acc": final_score[i]['overall_accuracy'],
+                            f"valid/{self.lang}-{self.tag_class}/prec": final_score[i]['overall_precision'],
+                            f"valid/{self.lang}-{self.tag_class}/f1": final_score[i]['overall_f1'],
+                            f"valid/{self.lang}-{self.tag_class}/recall": final_score[i]['overall_recall'],
+                            f"{self.mode}-th": i
+                        })
+
+                        acc.append(final_score[i]['overall_accuracy'])
+                        recall.append(final_score[i]['overall_recall'])
+                        f1.append(final_score[i]['overall_f1'])
+                        prec.append(final_score[i]['overall_precision'])
+                        # generate the heatmap according to the F1 score
+                        profile_logging.append(final_score[i]['overall_f1'])
+
+                    metric_frame = pd.DataFrame({f"{self.mode}": [i for i in range(len(final_score))],
+                                                 "Accuracy": acc, "Precision": prec, "Recall": recall, "F1": f1})
+                    metric_frame.to_csv(file, index=False, sep=",")
             self.logger.info(f"{self.lang}-{self.tag_class} metrics evaluation has been saved!")
 
         elif self.corpus == "xnli" or self.corpus == "pawsx":
             profile_logging = final_score
-            with open(os.path.join(self.logging_path, f"{self.fc}_{self.lang}_{self.mode}.csv"), "w") as file:
-                for i in range(len(final_score)):
-                    self.logger.info(f"{self.lang} Performance of the {i}th is:")
-                    self.logger.info(f"{self.lang} F1, {final_score[i]}")
-                    wandb.log({ f"valid/{self.lang}/f1": final_score[i], f"{self.mode}-th": i})
 
-                metric_frame = pd.DataFrame({f"{self.mode}": [i for i in range(len(final_score))], "F1": final_score})
-                metric_frame.to_csv(file, index=False, sep=",")
+            try:
+                with open(os.path.join(self.logging_path, f"{self.fc}_{self.lang}_{self.mode}.csv"), "w") as file:
+                    for i in range(len(final_score)):
+                        self.logger.info(f"{self.lang} Performance of the {i}th is:")
+                        self.logger.info(f"{self.lang} F1, {final_score[i]}")
+                        wandb.log({ f"valid/{self.lang}/f1": final_score[i], f"{self.mode}-th": i})
+
+                    metric_frame = pd.DataFrame({f"{self.mode}": [i for i in range(len(final_score))], "F1": final_score})
+                    metric_frame.to_csv(file, index=False, sep=",")
+            except:
+                path = os.path.join(self.logging_path, f"{self.fc}_{self.lang}_{self.mode}.csv")
+                self.logger.info(f"logging save path: {path}")
+                with open(path, "w") as file:
+                    for i in range(len(final_score)):
+                        self.logger.info(f"{self.lang} Performance of the {i}th is:")
+                        self.logger.info(f"{self.lang} F1, {final_score[i]}")
+                        wandb.log({ f"valid/{self.lang}/f1": final_score[i], f"{self.mode}-th": i})
+
+                    metric_frame = pd.DataFrame({f"{self.mode}": [i for i in range(len(final_score))], "F1": final_score})
+                    metric_frame.to_csv(file, index=False, sep=",")
+
             self.logger.info(f"{self.lang} metrics evaluation has been saved!")
 
         # Save the profile figure of the output
@@ -232,17 +279,31 @@ class EvalTrainer(TrainerConfig):
 
             elif self.corpus == "xnli" or self.corpus == "pawsx":
                 results = []
+                confmat = ConfusionMatrix(num_classes=self.num_labels).to(self.device)
+                i = 0
                 for (example_batched, labels) in tqdm(self.dataloader["test"]):
+                    i += 1
                     input_ids = example_batched["input_ids"].to(self.device)
                     attention_mask = example_batched["attention_mask"].to(self.device)
                     labels = labels.int().to(self.device)  # use int()
                     outputs = self.model(input_ids, attention_mask)
                     logits = outputs[index][:,0,:]  # CLS
                     preds = torch.argmax(logits, dim=1).int().to(self.device)  # use int()
-                    f1 = f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average='micro')
-                    results.append(f1)
+
+                    # self.logger.info(f"label: {labels}")
+                    # self.logger.info(f"preds: {preds}")
+
+                    if i == 1:
+                        confusion_matrix = confmat(preds, labels)
+                        f1 = f1_score(preds, labels, num_classes=self.num_labels)
+                    else:
+                        confusion_matrix += confmat(preds, labels)
+                        f1 += f1_score(preds, labels, num_classes=self.num_labels)
+                self.logger.info(f"(tn, fp; fn, tp): {confusion_matrix.ravel()}")
+                results.append(f1 / len(self.dataloader['test']))
+
                 logger.info(f"{self.mode} {index} on {self.lang} has been evaluated..")
-                return sum(results) / sum(results)
+                return results
 
 
 

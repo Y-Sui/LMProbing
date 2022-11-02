@@ -4,9 +4,6 @@
     <list default="true" id="104bff8e-df7a-42c8-96fb-fe508f92b321" name="Changes" comment="wikiann split tag_class">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/paper-revision/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paper-revision/dataloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/dataloader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paper-revision/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paper-revision/run_exp.sh" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/run_exp.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/paper-revision/trainer.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/trainer.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -257,7 +254,7 @@
       <workItem from="1666011312600" duration="21626000" />
       <workItem from="1666236895747" duration="5119000" />
       <workItem from="1666495038272" duration="23058000" />
-      <workItem from="1666713988073" duration="10129000" />
+      <workItem from="1666713988073" duration="25405000" />
     </task>
     <task id="LOCAL-00001" summary="add the final version of head_wise &amp; layer_wise model">
       <created>1657296664110</created>
@@ -427,7 +424,14 @@
       <option name="project" value="LOCAL" />
       <updated>1666713622300</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="wikiann split tag_class">
+      <created>1667132776250</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1667132776250</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
