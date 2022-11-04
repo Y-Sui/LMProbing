@@ -72,14 +72,14 @@ def main(args):
     if instances < 100:
         logger.info(f"{args.lang} has less than 100 instances, drop off from the training process")
         exit()
-    # # wandb init
-    # project = 'Eval Probing'
-    # entity = 'yuansui'
-    # group = 'Paper-revision-layer-wise-and-head-wise'
-    # display_name = f"fc[{args.fc}]-corpus-[{args.corpus}]-lang-[{args.lang}]-mode[{args.mode}]"
-    # wandb.init(reinit=True, project=project, entity=entity,
-    #            name=display_name, group=group, tags=["train & eval"])
-    # wandb.config["args"] = vars(args)
+    # wandb init
+    project = 'Eval Probing'
+    entity = 'yuansui'
+    group = 'Paper-revision-layer-wise-and-head-wise'
+    display_name = f"fc[{args.fc}]-corpus-[{args.corpus}]-lang-[{args.lang}]-mode[{args.mode}]"
+    wandb.init(reinit=True, project=project, entity=entity,
+               name=display_name, group=group, tags=["train & eval"])
+    wandb.config["args"] = vars(args)
 
     EvalTrainer(args, dataloader, TAG_DICT_WIKIANN).train(args)
 

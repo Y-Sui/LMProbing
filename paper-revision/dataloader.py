@@ -1,7 +1,7 @@
 import logging
 
 import torch
-from datasets import load_dataset, DatasetDict
+from datasets import load_dataset, DatasetDict, concatenate_datasets
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer
 from model import DEFAULT_MODEL_NAMES
@@ -9,7 +9,7 @@ from model import DEFAULT_MODEL_NAMES
 DEFALT_DATASETS = {"xnli": "xnli", "pawsx":"paws-x", "wikiann": "wikiann", "ud": "universal_dependencies"}
 DEFALT_LANGUAGES = {
     "xnli": ['ar', 'bg', 'de', 'el', 'en', 'es', 'fr', 'hi', 'ru', 'sw', 'th', 'tr', 'ur', 'vi', 'zh', 'all_languages'],
-    "pawsx": ['en', 'de', 'es', 'fr', 'ja', 'ko', 'zh'],
+    "pawsx": ['en', 'de', 'es', 'fr', 'ja', 'ko', 'zh', "all_languages"],
     "wikiann": ['ace', 'af', 'als', 'am', 'an', 'ang', 'ar', 'arc', 'arz', 'as', 'ast', 'ay', 'az', 'ba', 'bar', 'bat-smg', 'be', 'be-x-old', 'bg', 'bh', 'bn', 'bo', 'br', 'bs', 'ca', 'cbk-zam', 'cdo', 'ce', 'ceb', 'ckb', 'co', 'crh', 'cs', 'csb', 'cv', 'cy', 'da', 'de', 'diq', 'dv', 'el', 'eml', 'en', 'eo', 'es', 'et', 'eu', 'ext', 'fa', 'fi', 'fiu-vro', 'fo', 'fr', 'frr', 'fur', 'fy', 'ga', 'gan', 'gd', 'gl', 'gn', 'gu', 'hak', 'he', 'hi', 'hr', 'hsb', 'hu', 'hy', 'ia', 'id', 'ig', 'ilo', 'io', 'is', 'it', 'ja', 'jbo', 'jv', 'ka', 'kk', 'km', 'kn', 'ko', 'ksh', 'ku', 'ky', 'la', 'lb', 'li', 'lij', 'lmo', 'ln', 'lt', 'lv', 'map-bms', 'mg', 'mhr', 'mi', 'min', 'mk', 'ml', 'mn', 'mr', 'ms', 'mt', 'mwl', 'my', 'mzn', 'nap', 'nds', 'ne', 'nl', 'nn', 'no', 'nov', 'oc', 'or', 'os', 'pa', 'pdc', 'pl', 'pms', 'pnb', 'ps', 'pt', 'qu', 'rm', 'ro', 'ru', 'rw', 'sa', 'sah', 'scn', 'sco', 'sd', 'sh', 'si', 'simple', 'sk', 'sl', 'so', 'sq', 'sr', 'su', 'sv', 'sw', 'szl', 'ta', 'te', 'tg', 'th', 'tk', 'tl', 'tr', 'tt', 'ug', 'uk', 'ur', 'uz', 'vec', 'vep', 'vi', 'vls', 'vo', 'wa', 'war', 'wuu', 'xmf', 'yi', 'yo', 'zea', 'zh', 'zh-classical', 'zh-min-nan', 'zh-yue'],
     "ud": ['af_afribooms', 'akk_pisandub', 'akk_riao', 'aqz_tudet', 'sq_tsa', 'am_att', 'grc_perseus', 'grc_proiel', 'apu_ufpa', 'ar_nyuad', 'ar_padt', 'ar_pud', 'hy_armtdp', 'aii_as', 'bm_crb', 'eu_bdt', 'be_hse', 'bho_bhtb', 'br_keb', 'bg_btb', 'bxr_bdt', 'yue_hk', 'ca_ancora', 'zh_cfl', 'zh_gsd', 'zh_gsdsimp', 'zh_hk', 'zh_pud', 'ckt_hse', 'lzh_kyoto', 'cop_scriptorium', 'hr_set', 'cs_cac', 'cs_cltt', 'cs_fictree', 'cs_pdt', 'cs_pud', 'da_ddt', 'nl_alpino', 'nl_lassysmall', 'en_esl', 'en_ewt', 'en_gum', 'en_gumreddit', 'en_lines', 'en_partut', 'en_pronouns', 'en_pud', 'myv_jr', 'et_edt', 'et_ewt', 'fo_farpahc', 'fo_oft', 'fi_ftb', 'fi_ood', 'fi_pud', 'fi_tdt', 'fr_fqb', 'fr_ftb', 'fr_gsd', 'fr_partut', 'fr_pud', 'fr_sequoia', 'fr_spoken', 'gl_ctg', 'gl_treegal', 'de_gsd', 'de_hdt', 'de_lit', 'de_pud', 'got_proiel', 'el_gdt', 'he_htb', 'qhe_hiencs', 'hi_hdtb', 'hi_pud', 'hu_szeged', 'is_icepahc', 'is_pud', 'id_csui', 'id_gsd', 'id_pud', 'ga_idt', 'it_isdt', 'it_partut', 'it_postwita', 'it_pud', 'it_twittiro', 'it_vit', 'ja_bccwj', 'ja_gsd', 'ja_modern', 'ja_pud', 'krl_kkpp', 'kk_ktb', 'kfm_aha', 'koi_uh', 'kpv_ikdp', 'kpv_lattice', 'ko_gsd', 'ko_kaist', 'ko_pud', 'kmr_mg', 'la_ittb', 'la_llct', 'la_perseus', 'la_proiel', 'lv_lvtb', 'lt_alksnis', 'lt_hse', 'olo_kkpp', 'mt_mudt', 'gv_cadhan', 'mr_ufal', 'gun_dooley', 'gun_thomas', 'mdf_jr', 'myu_tudet', 'pcm_nsc', 'nyq_aha', 'sme_giella', 'no_bokmaal', 'no_nynorsk', 'no_nynorsklia', 'cu_proiel', 'fro_srcmf', 'orv_rnc', 'orv_torot', 'otk_tonqq', 'fa_perdt', 'fa_seraji', 'pl_lfg', 'pl_pdb', 'pl_pud', 'pt_bosque', 'pt_gsd', 'pt_pud', 'ro_nonstandard', 'ro_rrt', 'ro_simonero', 'ru_gsd', 'ru_pud', 'ru_syntagrus', 'ru_taiga', 'sa_ufal', 'sa_vedic', 'gd_arcosg', 'sr_set', 'sms_giellagas', 'sk_snk', 'sl_ssj', 'sl_sst', 'soj_aha', 'ajp_madar', 'es_ancora', 'es_gsd', 'es_pud', 'swl_sslc', 'sv_lines', 'sv_pud', 'sv_talbanken', 'gsw_uzh', 'tl_trg', 'tl_ugnayan', 'ta_mwtt', 'ta_ttb', 'te_mtg', 'th_pud', 'tpn_tudet', 'qtd_sagt', 'tr_boun', 'tr_gb', 'tr_imst', 'tr_pud', 'uk_iu', 'hsb_ufal', 'ur_udtb', 'ug_udt', 'vi_vtb', 'wbp_ufal', 'cy_ccg', 'wo_wtb', 'yo_ytb'],
 }
@@ -36,9 +36,23 @@ class EvaluationProbing(DataConfig):
         self.logger = logging.getLogger("EvalDataloader")
         self.logger.info(vars(args))
         if self.corpus != "wikiann":
-            self.dataset = load_dataset(self.corpus, self.lang)
+            if self.lang != "all_languages":
+                self.dataset = load_dataset(self.corpus, self.lang)
+            else:
+                self.dataset = self.add_dataset(args.corpus)
         else:
-            self.dataset = self.load_dataset_wikiann()
+            if self.lang != "all_languages":
+                self.dataset = self.load_dataset_wikiann(self.lang, None)
+            else:
+                self.dataset = self.add_dataset(args.corpus)
+
+
+
+        print(self.dataset)
+
+
+
+
         self.tokenizer = AutoTokenizer.from_pretrained(DEFAULT_MODEL_NAMES[self.tokenizer_config])
         self.pad_token_id = self.tokenizer.pad_token_id
 
@@ -111,14 +125,29 @@ class EvaluationProbing(DataConfig):
         }
         return collate_fns.get(fn)
 
-    def load_dataset_wikiann(self):
+    def load_dataset_wikiann(self, lang, split):
         """tag_class split"""
-        wikiann_dataset = load_dataset(self.corpus, self.lang)
+        wikiann_dataset = load_dataset(self.corpus, lang, split=split)
         for set in ['train', 'validation', 'test']:
             wikiann_dataset[set] = wikiann_dataset[set].filter(
                 lambda x: "".join(x['spans']).__contains__(self.tag_class)
             )
         return DatasetDict({"train": wikiann_dataset["train"], "validation": wikiann_dataset["validation"], "test": wikiann_dataset["test"]})
+
+    def add_dataset(self, key):
+        df_list = {"train":[], "validation":[], "test":[]}
+        if self.corpus == "wikiann":
+            for set in ['train', 'validation', 'test']:
+                for lang in DEFALT_LANGUAGES[key][:-1]:
+                    df = self.load_dataset_wikiann(lang, set)
+                    df_list[set].append(df)
+        else:
+            for set in ['train', 'validation', 'test']:
+                for lang in DEFALT_LANGUAGES[key][:-1]:
+                    df = load_dataset(self.corpus, lang, split=set)
+                    df_list[set].append(df)
+
+        return DatasetDict({"train": concatenate_datasets(df_list["train"]), "validation": concatenate_datasets(df_list["validation"]), "test": concatenate_datasets(df_list["test"])})
 
     def get_dataloader(self):
         """
