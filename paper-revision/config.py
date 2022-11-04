@@ -27,4 +27,11 @@ class LoggerConfig:
             os.makedirs(os.path.join(self.checkpoints, i, "M-BERT_head-wise_finetune"), exist_ok=True)
             os.makedirs(os.path.join(self.checkpoints, i, "M-BERT_layer-wise_probing"), exist_ok=True)
             os.makedirs(os.path.join(self.checkpoints, i, "M-BERT_layer-wise_probing"), exist_ok=True)
+            os.makedirs(os.path.join(self.logging_path, i, "M-BERT_probing"), exist_ok=True)
+            os.makedirs(os.path.join(self.logging_path, i, "XLM-R_probing"), exist_ok=True)
+            os.makedirs(os.path.join(self.logging_path, i, "M-BERT_finetune"), exist_ok=True)
+            os.makedirs(os.path.join(self.logging_path, i, "XLM-R_finetune"), exist_ok=True)
+            os.makedirs(os.path.join(self.checkpoints, i, "M-BERT_finetune"), exist_ok=True)
+            os.makedirs(os.path.join(self.checkpoints, i, "XLM-R_finetune"), exist_ok=True)
+
             os.makedirs(os.path.join(self.output_path, i), exist_ok=True)

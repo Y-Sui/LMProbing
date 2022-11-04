@@ -41,7 +41,8 @@ def get_arguments():
     parser.add_argument("--num_workers", default=0, type=int)
     parser.add_argument("--lr", default=0.0001, type=float)
     parser.add_argument("--profile", action="store_true", help="whether to generate the heatmap")
-    parser.add_argument("--mode", choices=["layer-wise", "head-wise"], type=str, help="choose training mode", default="layer-wise")
+    parser.add_argument("--mode", choices=["layer-wise", "head-wise"], type=str, help="choose training mode")
+    parser.add_argument("--checkpoints", type=str, default="/home/weicheng/data_interns/yuansui/models/xnli/M-BERT_finetune/")
     args = parser.parse_args()
 
     # Setup devices (No distributed training here)
@@ -71,15 +72,14 @@ def main(args):
     if instances < 100:
         logger.info(f"{args.lang} has less than 100 instances, drop off from the training process")
         exit()
-
-    # wandb init
-    project = 'Eval Probing'
-    entity = 'yuansui'
-    group = 'Paper-revision-layer-wise-and-head-wise'
-    display_name = f"fc[{args.fc}]-corpus-[{args.corpus}]-lang-[{args.lang}]-mode[{args.mode}]"
-    wandb.init(reinit=True, project=project, entity=entity,
-               name=display_name, group=group, tags=["train & eval"])
-    wandb.config["args"] = vars(args)
+    # # wandb init
+    # project = 'Eval Probing'
+    # entity = 'yuansui'
+    # group = 'Paper-revision-layer-wise-and-head-wise'
+    # display_name = f"fc[{args.fc}]-corpus-[{args.corpus}]-lang-[{args.lang}]-mode[{args.mode}]"
+    # wandb.init(reinit=True, project=project, entity=entity,
+    #            name=display_name, group=group, tags=["train & eval"])
+    # wandb.config["args"] = vars(args)
 
     EvalTrainer(args, dataloader, TAG_DICT_WIKIANN).train(args)
 

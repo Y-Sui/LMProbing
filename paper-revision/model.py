@@ -1,11 +1,50 @@
+import os
+
 import torch
 import torch.nn as nn
-from transformers import AutoModel
+from transformers import AutoModel, AutoConfig, AutoModelForSequenceClassification, AutoModelForTokenClassification
 
 DEFAULT_MODEL_NAMES = {"M-BERT": "bert-base-multilingual-cased",
                        "BERT": "bert-base-uncased",
                        "XLM-R": "xlm-roberta-base"}
 DEFAULT_EMBED_SIZE = {"small": 64, "xsmall": 32, "medium": 128, "large": 256}
+
+
+
+class CommonConfig(nn.Module):
+    """
+    Finetune MBert model using xnli and paswx (text/sequence classification task)
+    """
+    def __init__(self, args):
+        super().__init__()
+        self.corpus = args.corpus
+        self.max_length = args.max_length
+        self.batch_size = args.batch_size
+        self.embed_size = DEFAULT_EMBED_SIZE[args.embed_size]
+        self.classifier_num = args.classifier_num
+        self.model = DEFAULT_MODEL_NAMES[args.model_config]
+        self.num_labels = args.num_labels
+        self.fc = args.fc
+        self.checkpoints = args.checkpoints
+        self.config = AutoConfig.from_pretrained(self.model)
+        self.backbone = AutoModelForSequenceClassification.from_pretrained(self.model, num_labels=self.num_labels)
+
+class ModelFinetune(CommonConfig):
+    def forward(self, input_ids, attention_mask):
+        backbone = self.backbone(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=False)
+        return backbone
+
+
+class ModelProbing(CommonConfig):
+    def __init__(self, args):
+        super().__init__(args)
+        # ignore_mismatched_sizes will load the embedding and encoding layers of your model, but will randomly initialize the classification head
+        # very interesting parameter, however this approach does not provide any meaningful results due to random init for the new labels
+        self.backbone = AutoModelForTokenClassification.from_pretrained(os.path.join(self.checkpoints, f"{self.corpus}_{self.fc}.pt"), num_labels = self.num_labels, ignore_mismatched_sizes=True) # using TokenClassification instead of SequenceClassification
+
+    def forward(self, input_ids, attention_mask):
+        backbone = self.backbone(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=False)
+        return backbone
 
 class LayerWiseConfig(nn.Module):
     def __init__(self, args):
