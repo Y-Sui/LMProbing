@@ -1,4 +1,7 @@
 import os
+
+from transformers import get_scheduler
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "3" # set the cuda card 2,3,4,5
 
 from torchmetrics import ConfusionMatrix
@@ -15,6 +18,7 @@ from datasets import load_metric
 from matplotlib import pyplot as plt
 from torch import nn
 from tqdm import tqdm
+from evaluate import load
 
 from model import MBertLayerWise, MBertHeadWise, XLMRHeadWise, XLMRLayerWise, ModelFinetune, ModelProbing
 from dataloader import DEFALT_DATASETS
@@ -42,7 +46,6 @@ class EvalTrainer(TrainerConfig):
     def __init__(self, args, dataloader, label_list):
         super().__init__(args, dataloader, label_list)
         self.logger = logging.getLogger("Train()")
-
         self.sample_config = LoggerConfig()
 
         # model checkpoints path
@@ -68,20 +71,25 @@ class EvalTrainer(TrainerConfig):
             self.logger.info("Not Supported Layer or Head Wise Mode!")
 
     def train(self, args):
+        self.model.to(self.device)
+        training_sets = self.dataloader['train']
+        criterion = nn.CrossEntropyLoss(ignore_index=self.pad_token_id).to(self.device)
+        optimizer = torch.optim.Adam(
+            self.model.parameters(),  # only update the fc parameters (classifier)
+            lr=self.lr,
+        )
+        num_training_steps = self.epochs * len(training_sets)
+        lr_scheduler = get_scheduler(
+            "linear", optimizer=optimizer, num_warmup_steps=0, num_training_steps=num_training_steps
+        )
+        progress_bar = tqdm(range(num_training_steps))
         if self.corpus == "xnli" or self.corpus == "pawsx":
             """
             fine-tune using sequence classification task
             dataset: xnli, pawsx
             """
-            self.model.to(self.device)
-            criterion = nn.CrossEntropyLoss(ignore_index=self.pad_token_id).to(self.device)
-            optimizer = torch.optim.Adam(
-                filter(lambda p: p.requires_grad, self.model.parameters()),  # only update the fc parameters (classifier)
-                lr=self.lr,
-            )
-            optimizer.zero_grad()  # make sure each layer's optimizer set to zero grad
             for epoch in range(1, self.epochs + 1):
-                for idx, (train_batches, labels) in enumerate(self.dataloader['train']):
+                for idx, (train_batches, labels) in enumerate(training_sets):
                     optimizer.zero_grad()
                     input_ids = train_batches["input_ids"].to(self.device)
                     attention_mask = train_batches["attention_mask"].to(self.device)
@@ -91,6 +99,8 @@ class EvalTrainer(TrainerConfig):
                     loss = criterion(logits, labels)
                     loss.backward()
                     optimizer.step()
+                    lr_scheduler.step()
+                    progress_bar.update(1) # update progress
                     if idx % 500 == 0:
                         self.logger.info(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
                         wandb.log({"epoch": epoch, "batch": idx, "train/loss": loss.data})
@@ -105,15 +115,8 @@ class EvalTrainer(TrainerConfig):
             self.logger.info(f"{self.corpus}/{self.lang} F1, {eval_results}")
 
         elif self.corpus == "wikiann":
-            self.model.to(self.device)
-            criterion = nn.CrossEntropyLoss(ignore_index=self.pad_token_id).to(self.device)  # remove special token
-            optimizer = torch.optim.Adam(
-                filter(lambda p: p.requires_grad, self.model.parameters()), # only update the fc parameters (classifier)
-                lr=self.lr,
-            )
-            optimizer.zero_grad()  # make sure each layer's optimizer set to zero grad
             for epoch in range(1, self.epochs + 1):
-                for idx, (train_batches, labels) in enumerate(self.dataloader['train']):
+                for idx, (train_batches, labels) in enumerate(training_sets):
                     optimizer.zero_grad()
                     input_ids = train_batches["input_ids"].to(self.device)
                     attention_mask = train_batches["attention_mask"].to(self.device)
@@ -123,6 +126,8 @@ class EvalTrainer(TrainerConfig):
                     loss = criterion(logits, labels)
                     loss.backward()
                     optimizer.step()
+                    lr_scheduler.step()
+                    progress_bar.update(1)  # update progress
                     if idx % 500 == 0:
                         self.logger.info(f"epoch: {epoch}, batch: {idx}, loss: {loss.data}")
                         wandb.log({"epoch": epoch, "batch": idx, "train/loss": loss.data})
@@ -176,6 +181,8 @@ class EvalTrainer(TrainerConfig):
                 results = []
                 confmat = ConfusionMatrix(num_classes=self.num_labels).to(self.device)
                 i = 0
+                # Get the metric function
+                xnli_metric = load("xnli")
                 for (example_batched, labels) in tqdm(self.dataloader["test"]):
                     i += 1
                     input_ids = example_batched["input_ids"].to(self.device)
@@ -186,14 +193,17 @@ class EvalTrainer(TrainerConfig):
                     preds = torch.argmax(logits, dim=-1).int().to(self.device)  # use int()
                     # self.logger.info(f"label: {labels}")
                     # self.logger.info(f"preds: {preds}")
+                    xnli_metric.add_batch(predictions=preds, references=labels)
                     if i == 1:
                         confusion_matrix = confmat(preds, labels)
                         f1 = f1_score(preds, labels, num_classes=self.num_labels).cpu().numpy()
                     else:
                         confusion_matrix += confmat(preds, labels)
                         f1 += f1_score(preds, labels, num_classes=self.num_labels).cpu().numpy()
+
                 self.logger.info(f"(tn, fp; fn, tp): {confusion_matrix.ravel()}")
                 results.append(f1 / len(self.dataloader['test']))
+                self.logger.info(f"xnli acc: {xnli_metric.compute()}")
                 return results
     def report(self, eval_results):
         if self.corpus == "xnli" or self.corpus == "pawsx":

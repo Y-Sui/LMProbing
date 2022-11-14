@@ -4,12 +4,10 @@ import torch
 import torch.nn as nn
 from transformers import AutoModel, AutoConfig, AutoModelForSequenceClassification, AutoModelForTokenClassification
 
-DEFAULT_MODEL_NAMES = {"M-BERT": "bert-base-multilingual-cased",
+DEFAULT_MODEL_NAMES = {"M-BERT": "bert-base-multilingual-uncased",
                        "BERT": "bert-base-uncased",
-                       "XLM-R": "xlm-roberta-base"}
+                       "XLM-R": "xlm-roberta-large"}
 DEFAULT_EMBED_SIZE = {"small": 64, "xsmall": 32, "medium": 128, "large": 256}
-
-
 
 class CommonConfig(nn.Module):
     """

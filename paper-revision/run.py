@@ -57,21 +57,22 @@ def main(args):
     dataloader = evaluation_probing_loader.get_dataloader()
     args.pad_token_id = evaluation_probing_loader.pad_token_id
 
-    if args.lang not in DEFALT_LANGUAGES[args.corpus]:
-        logger.info("Error language/subset setting")
-        exit()
-    else:
-        logger.info(dataloader) # drop off languages/subsets with less than 100 instances
-        try:
-            if len(dataloader) == 3:
-                instances = len(dataloader['train']) + len(dataloader['validation']) + len(dataloader['test'])
-            else:
-                instances = len(dataloader['test'])
-        except:
-            logger.info("Error")
-    if instances < 100:
-        logger.info(f"{args.lang} has less than 100 instances, drop off from the training process")
-        exit()
+    # if args.lang not in DEFALT_LANGUAGES[args.corpus]:
+    #     logger.info("Error language/subset setting")
+    #     exit()
+    # else:
+    #     logger.info(dataloader) # drop off languages/subsets with less than 100 instances
+    #     try:
+    #         if len(dataloader) == 3:
+    #             instances = len(dataloader['train']) + len(dataloader['validation']) + len(dataloader['test'])
+    #         else:
+    #             instances = len(dataloader['test'])
+    #     except:
+    #         logger.info("Error")
+    # if instances < 100:
+    #     logger.info(f"{args.lang} has less than 100 instances, drop off from the training process")
+    #     exit()
+
     # wandb init
     project = 'Eval Probing'
     entity = 'yuansui'
