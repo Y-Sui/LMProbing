@@ -1,4 +1,5 @@
 import os
+import re
 
 import torch
 import torch.nn as nn
@@ -8,6 +9,22 @@ DEFAULT_MODEL_NAMES = {"M-BERT": "bert-base-multilingual-uncased",
                        "BERT": "bert-base-uncased",
                        "XLM-R": "xlm-roberta-large"}
 DEFAULT_EMBED_SIZE = {"small": 64, "xsmall": 32, "medium": 128, "large": 256}
+
+# get the latest checkpoints
+PREFIX_CHECKPOINT_DIR = "checkpoint"
+_re_checkpoint = re.compile(r"^" + PREFIX_CHECKPOINT_DIR + r"\-(\d+)$")
+
+def get_last_checkpoint(folder):
+    content = os.listdir(folder)
+    checkpoints = [
+        path
+        for path in content
+        if _re_checkpoint.search(path) is not None and os.path.isdir(os.path.join(folder, path))
+    ]
+    if len(checkpoints) == 0:
+        return
+    return os.path.join(folder, max(checkpoints, key=lambda x: int(_re_checkpoint.search(x).groups()[0])))
+
 
 class CommonConfig(nn.Module):
     """
@@ -32,17 +49,33 @@ class ModelFinetune(CommonConfig):
         backbone = self.backbone(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=False)
         return backbone
 
-
 class ModelProbing(CommonConfig):
     def __init__(self, args):
         super().__init__(args)
+        # Detecting last checkpoint.
+        last_checkpoint = None
+        if os.path.isdir(args.checkpoints):
+            last_checkpoint = get_last_checkpoint(args.checkpoints)
+            if last_checkpoint is None and len(os.listdir(args.checkpoints)) > 0:
+                raise ValueError(
+                    f"Output directory ({args.checkpoints}) already exists and is not empty. "
+                    "Use --overwrite_output_dir to overcome."
+                )
+            elif last_checkpoint is not None:
+                print(
+                    f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
+                    "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
+                )
+        self.backbone = AutoModel.from_pretrained(last_checkpoint)
         # ignore_mismatched_sizes will load the embedding and encoding layers of your model, but will randomly initialize the classification head
         # very interesting parameter, however this approach does not provide any meaningful results due to random init for the new labels
-        self.backbone = AutoModelForTokenClassification.from_pretrained(os.path.join(self.checkpoints, f"{self.corpus}_{self.fc}.pt"), num_labels = self.num_labels, ignore_mismatched_sizes=True) # using TokenClassification instead of SequenceClassification
+        # self.backbone = AutoModelForTokenClassification.from_pretrained(last_checkpoint, num_labels = self.num_labels, ignore_mismatched_sizes=True) # using TokenClassification instead of SequenceClassification
+        self.probe = nn.Linear(self.backbone.hidden_size, self.num_labels) # probing layer
 
     def forward(self, input_ids, attention_mask):
-        backbone = self.backbone(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=False)
-        return backbone
+        with torch.no_grad():
+            backbone = self.backbone(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=False)
+        return self.probe(backbone)
 
 class LayerWiseConfig(nn.Module):
     def __init__(self, args):
