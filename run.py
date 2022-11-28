@@ -1,6 +1,7 @@
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "4" # set the cuda card 2,3,4,5
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "5" # set the cuda card 2,3,4,5
 CUDA_DEVICES = 4
 
 import argparse
@@ -18,9 +19,6 @@ from datasets import load_metric
 from dataset.config import DataConfig
 from model import Bert_4_Classification_Head_Wise, Bert_4_Classification_Layer_Wise
 from dataloader import get_files_path, get_sequence_classification
-
-import torch.multiprocessing as mp
-import torch.distributed as dist
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
@@ -126,6 +124,13 @@ def train(eval_model, train_loader, eval_loader, label_list, file_path, mode, la
         logger.info(f"{mode} {i} on {file_path} has been trained..")
         logger.info(f"start to evaluate the model..")
         eval_results = eval(i, model, eval_loader, label_list, file_path, mode, device)
+
+        logger.info(f"{label} Performance of the {i}th is:")
+        logger.info(f"{label} precision: {eval_results['overall_precision']}")
+        logger.info(f"{label} Recall: {eval_results['overall_recall']}")
+        logger.info(f"{label} F1, {eval_results['overall_f1']}")
+        logger.info(f"{label} Accuracy, {eval_results['overall_accuracy']}")
+
         final_score.append(eval_results)
 
     # Save the evaluation
@@ -134,17 +139,17 @@ def train(eval_model, train_loader, eval_loader, label_list, file_path, mode, la
     with open(os.path.join(logging_path, f"{label}_{mode}_{file_path}.csv"), "w") as file:
         acc, recall, f1, prec = [], [], [], []
         for i in range(len(final_score)):
-            logger.info(f"{label} Performance of the {i}th is:")
-            logger.info(f"{label} precision: {final_score[i]['overall_precision']}")
-            logger.info(f"{label} Recall: {final_score[i]['overall_recall']}")
-            logger.info(f"{label} F1, {final_score[i]['overall_f1']}")
-            logger.info(f"{label} Accuracy, {final_score[i]['overall_accuracy']}")
+            logger.info(f"{mode}/{label} Performance of the {i}th is:")
+            logger.info(f"{mode}/{label} precision: {final_score[i]['overall_precision']}")
+            logger.info(f"{mode}/{label} Recall: {final_score[i]['overall_recall']}")
+            logger.info(f"{mode}/{label} F1, {final_score[i]['overall_f1']}")
+            logger.info(f"{mode}/{label} Accuracy, {final_score[i]['overall_accuracy']}")
 
             wandb.log({
-                f"valid/{label}/acc": final_score[i]['overall_accuracy'],
-                f"valid/{label}/prec": final_score[i]['overall_precision'],
-                f"valid/{label}/f1": final_score[i]['overall_f1'],
-                f"valid/{label}/recall": final_score[i]['overall_recall'],
+                f"valid/{mode}/{label}/acc": final_score[i]['overall_accuracy'],
+                f"valid/{mode}/{label}/prec": final_score[i]['overall_precision'],
+                f"valid/{mode}/{label}/f1": final_score[i]['overall_f1'],
+                f"valid/{mode}/{label}/recall": final_score[i]['overall_recall'],
                 f"{mode}-th": i
             })
 
@@ -217,10 +222,10 @@ def main(args):
     neg_sample_path = get_files_path(filePath=os.path.join(sample_config.data_path, f"{args.task}", "neg_samples"),
                                      outPath=os.path.join(sample_config.output_path, f"{args.task}"))
     for i in range(len(pos_sample_path["train"])):
-
         file_name = pos_sample_path['train'][i].split('/')[-1].replace('_train', '')
-
         # Wandb init
+        file_name = pos_sample_path['train'][i].split('/')[-1].replace('_train', '')
+        # wandb init
         project = 'Eval Probing'
         entity = 'yuansui'
         group = 'Eval-probing-for-layer-wise-and-head-wise'
@@ -277,10 +282,10 @@ def main(args):
                 f"pos-neg Accuracy, {pos_final_score[i]['overall_accuracy'] - neg_final_score[i]['overall_accuracy']}")
 
             wandb.log({
-                f"valid/gap/acc": pos_final_score[i]['overall_accuracy'] - neg_final_score[i]['overall_accuracy'],
-                f"valid/gap/prec": pos_final_score[i]['overall_precision'] - neg_final_score[i]['overall_precision'],
-                f"valid/gap/f1": pos_final_score[i]['overall_f1'] - neg_final_score[i]['overall_f1'],
-                f"valid/gap/recall": pos_final_score[i]['overall_recall'] - neg_final_score[i]['overall_recall'],
+                f"valid/gap/{args.mode}/acc": pos_final_score[i]['overall_accuracy'] - neg_final_score[i]['overall_accuracy'],
+                f"valid/gap/{args.mode}/prec": pos_final_score[i]['overall_precision'] - neg_final_score[i]['overall_precision'],
+                f"valid/gap/{args.mode}/f1": pos_final_score[i]['overall_f1'] - neg_final_score[i]['overall_f1'],
+                f"valid/gap/{args.mode}/recall": pos_final_score[i]['overall_recall'] - neg_final_score[i]['overall_recall'],
                 f"{args.mode}-th": i
             })
 
