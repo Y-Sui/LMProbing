@@ -2,11 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="104bff8e-df7a-42c8-96fb-fe508f92b321" name="Changes" comment="official finetune code">
+      <change afterPath="$PROJECT_DIR$/paper-revision/prober.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paper-revision/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paper-revision/dataloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/dataloader.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/paper-revision/finetune_exp.sh" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/finetune_exp.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/paper-revision/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paper-revision/run_exp.sh" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/run_exp.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paper-revision/xnli.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/paper-revision/probing_exp.sh" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/probing_exp.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paper-revision/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/run_probing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paper-revision/run_xnli.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/run_xnli.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -92,7 +96,7 @@
       <recent name="E:\eval-probing" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.run (1)">
+  <component name="RunManager" selected="Python.dataloader (1)">
     <configuration name="aaaa" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="eval-probing" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -225,7 +229,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="run (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="run_probing" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="eval-probing" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -238,7 +242,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/paper-revision/run.py" />
+      <option name="SCRIPT_NAME" value="C:\Users\v-yuansui\Code_base\EvalProbing\paper-revision\run_probing.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -249,8 +253,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.run (1)" />
         <item itemvalue="Python.dataloader (1)" />
+        <item itemvalue="Python.run_probing" />
         <item itemvalue="Python.bio2num" />
         <item itemvalue="Python.dataloader" />
         <item itemvalue="Python.aaaa" />
@@ -290,7 +294,11 @@
       <workItem from="1667529146341" duration="11736000" />
       <workItem from="1667812444203" duration="1194000" />
       <workItem from="1668267329330" duration="13911000" />
-      <workItem from="1668415032185" duration="3459000" />
+      <workItem from="1668415032185" duration="6827000" />
+      <workItem from="1669021183145" duration="13313000" />
+      <workItem from="1669175045955" duration="604000" />
+      <workItem from="1669198247129" duration="16743000" />
+      <workItem from="1669296141330" duration="29063000" />
     </task>
     <task id="LOCAL-00001" summary="add the final version of head_wise &amp; layer_wise model">
       <created>1657296664110</created>
@@ -495,7 +503,14 @@
       <option name="project" value="LOCAL" />
       <updated>1668415756229</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="official finetune code">
+      <created>1668419172551</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1668419172551</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -549,6 +564,7 @@
     <SUITE FILE_PATH="coverage/eval_probing$dataloader__1_.coverage" NAME="dataloader (1) Coverage Results" MODIFIED="1666499696665" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
     <SUITE FILE_PATH="coverage/eval_probing$test.coverage" NAME="test Coverage Results" MODIFIED="1660741391172" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/eval_probing$dataloader.coverage" NAME="dataloader Coverage Results" MODIFIED="1666015667276" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/EvalProbing$dataloader__1_.coverage" NAME="dataloader (1) Coverage Results" MODIFIED="1669569856640" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
     <SUITE FILE_PATH="coverage/eval_probing$.coverage" NAME=" Coverage Results" MODIFIED="1660961118209" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

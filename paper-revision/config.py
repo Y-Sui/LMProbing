@@ -1,13 +1,12 @@
-from dataloader import DEFALT_DATASETS
 import os
 
 class LoggerConfig:
     def __init__(self):
         self.logging_path = "//home/weicheng/data_interns/yuansui/logging"
         self.checkpoints = "//home/weicheng/data_interns/yuansui/models"
-        self.corpus = DEFALT_DATASETS.keys()
+        self.corpus = ["xnli", "pawsx", "wikiann", "ud"]
         self.output_path = "//home/yuansui/paper-revision/output"
-        self.mkdir()
+        # self.mkdir()
 
     def mkdir(self):
         os.makedirs(self.logging_path, exist_ok=True)

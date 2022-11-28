@@ -1,6 +1,8 @@
 import os
 import re
 
+from config import LoggerConfig
+
 import torch
 import torch.nn as nn
 from transformers import AutoModel, AutoConfig, AutoModelForSequenceClassification, AutoModelForTokenClassification
@@ -10,21 +12,20 @@ DEFAULT_MODEL_NAMES = {"M-BERT": "bert-base-multilingual-uncased",
                        "XLM-R": "xlm-roberta-large"}
 DEFAULT_EMBED_SIZE = {"small": 64, "xsmall": 32, "medium": 128, "large": 256}
 
-# get the latest checkpoints
-PREFIX_CHECKPOINT_DIR = "checkpoint"
-_re_checkpoint = re.compile(r"^" + PREFIX_CHECKPOINT_DIR + r"\-(\d+)$")
+# # get the latest checkpoints
+# PREFIX_CHECKPOINT_DIR = "checkpoint"
+# _re_checkpoint = re.compile(r"^" + PREFIX_CHECKPOINT_DIR + r"\-(\d+)$")
 
-def get_last_checkpoint(folder):
-    content = os.listdir(folder)
-    checkpoints = [
-        path
-        for path in content
-        if _re_checkpoint.search(path) is not None and os.path.isdir(os.path.join(folder, path))
-    ]
-    if len(checkpoints) == 0:
-        return
-    return os.path.join(folder, max(checkpoints, key=lambda x: int(_re_checkpoint.search(x).groups()[0])))
-
+# def get_last_checkpoint(folder):
+#     content = os.listdir(folder)
+#     checkpoints = [
+#         path
+#         for path in content
+#         if _re_checkpoint.search(path) is not None and os.path.isdir(os.path.join(folder, path))
+#     ]
+#     if len(checkpoints) == 0:
+#         return
+#     return os.path.join(folder, max(checkpoints, key=lambda x: int(_re_checkpoint.search(x).groups()[0])))
 
 class CommonConfig(nn.Module):
     """
@@ -32,6 +33,11 @@ class CommonConfig(nn.Module):
     """
     def __init__(self, args):
         super().__init__()
+        if args.model_config == "M-BERT":
+            self.model_config = "mbert"
+        elif args.model_config == "XLM-R":
+            self.model_config = "xlm"
+        self.src = args.src # xnli or pawsx
         self.corpus = args.corpus
         self.max_length = args.max_length
         self.batch_size = args.batch_size
@@ -40,9 +46,8 @@ class CommonConfig(nn.Module):
         self.model = DEFAULT_MODEL_NAMES[args.model_config]
         self.num_labels = args.num_labels
         self.fc = args.fc
-        self.checkpoints = args.checkpoints
-        self.config = AutoConfig.from_pretrained(self.model)
-        self.backbone = AutoModelForSequenceClassification.from_pretrained(self.model, num_labels=self.num_labels)
+        self.sample_config = LoggerConfig()
+        self.checkpoint = os.path.join(self.sample_config.checkpoints, f"finetune-{self.src}-{self.model_config}")  # /home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert
 
 class ModelFinetune(CommonConfig):
     def forward(self, input_ids, attention_mask):
@@ -52,30 +57,38 @@ class ModelFinetune(CommonConfig):
 class ModelProbing(CommonConfig):
     def __init__(self, args):
         super().__init__(args)
-        # Detecting last checkpoint.
-        last_checkpoint = None
-        if os.path.isdir(args.checkpoints):
-            last_checkpoint = get_last_checkpoint(args.checkpoints)
-            if last_checkpoint is None and len(os.listdir(args.checkpoints)) > 0:
-                raise ValueError(
-                    f"Output directory ({args.checkpoints}) already exists and is not empty. "
-                    "Use --overwrite_output_dir to overcome."
-                )
-            elif last_checkpoint is not None:
-                print(
-                    f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
-                    "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
-                )
-        self.backbone = AutoModel.from_pretrained(last_checkpoint)
+        # # Detecting last checkpoint.
+        # last_checkpoint = None
+        # if os.path.isdir(self.checkpoint):
+        #     last_checkpoint = get_last_checkpoint(self.checkpoint)
+        #     if last_checkpoint is None and len(os.listdir(self.checkpoint)) > 0:
+        #         raise ValueError(
+        #             f"Output directory ({self.checkpoint}) already exists and is not empty. "
+        #             "Use --overwrite_output_dir to overcome."
+        #         )
+        #     elif last_checkpoint is not None:
+        #         print(
+        #             f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
+        #             "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
+        #         )
+        # AutoModel load model structure and parameters from checkpoints
+        self.backbone = AutoModel.from_pretrained(self.checkpoint, num_labels=self.num_labels, ignore_mismatched_sizes=True)
+        self.last_hidden_size = self._get_last_hidden_state_size()
         # ignore_mismatched_sizes will load the embedding and encoding layers of your model, but will randomly initialize the classification head
         # very interesting parameter, however this approach does not provide any meaningful results due to random init for the new labels
         # self.backbone = AutoModelForTokenClassification.from_pretrained(last_checkpoint, num_labels = self.num_labels, ignore_mismatched_sizes=True) # using TokenClassification instead of SequenceClassification
-        self.probe = nn.Linear(self.backbone.hidden_size, self.num_labels) # probing layer
+        self.probe = nn.Linear(self.last_hidden_size, self.num_labels) # probing layer
+
+    def _get_last_hidden_state_size(self):
+        bc = self.backbone(torch.tensor([[1, 1]]), torch.tensor(([[1, 1]])), output_hidden_states=True)
+        self.hidden_states = bc.hidden_states
+        return bc.hidden_states[-1].shape[-1]
 
     def forward(self, input_ids, attention_mask):
         with torch.no_grad():
-            backbone = self.backbone(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=False)
-        return self.probe(backbone)
+            backbone = self.backbone(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=True)
+            last_hidden_states = backbone.hidden_states[-1]
+        return self.probe(last_hidden_states)
 
 class LayerWiseConfig(nn.Module):
     def __init__(self, args):
