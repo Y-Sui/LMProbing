@@ -43,14 +43,20 @@ class DataConfig:
             self.model_config = "xlm"
         self.sample_config = LoggerConfig()
 
+
 class EvaluationProbing(DataConfig):
     def __init__(self, args):
         super().__init__(args)
         self.logger = logging.getLogger("EvalDataloader")
         self.logger.info(vars(args))
         # checkpoint path and tokenizer
-        self.checkpoint = os.path.join(self.sample_config.checkpoints, f"finetune-{self.src}-{self.model_config}")  # /home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert
-        self.tokenizer = PreTrainedTokenizerFast.from_pretrained(self.checkpoint)  # load tokenizer from json
+        if args.checkpoints != "NA":
+            self.checkpoint = os.path.join(self.sample_config.checkpoints, f"finetune-{self.src}-{self.model_config}")  # /home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert
+            self.tokenizer = PreTrainedTokenizerFast.from_pretrained(self.checkpoint)  # load tokenizer from json
+        else:
+            self.checkpoint = DEFAULT_MODEL_NAMES[f"{args.model_config}"]
+            self.tokenizer = AutoTokenizer.from_pretrained(self.checkpoint)
+
         self.pad_token_id = -100
 
         if self.corpus == "wikiann":
@@ -220,6 +226,9 @@ class EvaluationProbing(DataConfig):
             tokens.append(sample["lemmas"])
             head_pair.append(sample["head"])
             dep_rel.append(sample["deprel"])
+        # # append head annotation
+        # for i in range(len(tokens)):
+        #     tokens[i].append(f"[SEP]{head}")
 
         # get the valid_idx
         valid_b_idx = []

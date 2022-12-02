@@ -28,7 +28,7 @@ def get_arguments():
     parser.add_argument("--max_length", default=100, type=int, help="Max length of the tokenization")
     parser.add_argument("--fc", default="probing", type=str, choices=['probing', 'finetune'], help="choose which training strategies will be applied")
     parser.add_argument("--src", default="pawsx", type=str, choices=['pawsx', 'xnli'], help="choose which source corpus for finetuning")
-    parser.add_argument("--checkpoints", type=str, default="//home/weicheng/data_interns/yuansui/models/finetune-xnli-mbert")
+    parser.add_argument("--checkpoints", type=str, default="NA")
     # Options parameters
     parser.add_argument("--cache_dir", default=None, type=str,
                         help="Where do you want to store the pre-trained models downloaded from s3", )
@@ -59,7 +59,7 @@ def main(args):
     # wandb init
     project = 'Eval Probing'
     entity = 'yuansui'
-    group = 'Paper-revision-probing-1127'
+    group = 'Paper-revision-probing-pretrained'
     display_name = f"corpus-[{args.corpus}]-lang-[{args.lang}]" # corpus-wikiann-lang-en
     wandb.init(reinit=True, project=project, entity=entity,
                name=display_name, group=group, tags=["train & eval"])

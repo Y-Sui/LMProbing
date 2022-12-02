@@ -24,6 +24,8 @@ import sys
 from dataclasses import dataclass, field
 from typing import Optional
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,3" # only use 0, 1 GPU devices
+
 import datasets
 import numpy as np
 from datasets import load_dataset, DatasetDict, concatenate_datasets

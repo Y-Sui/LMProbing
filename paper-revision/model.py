@@ -9,7 +9,7 @@ from transformers import AutoModel, AutoConfig, AutoModelForSequenceClassificati
 
 DEFAULT_MODEL_NAMES = {"M-BERT": "bert-base-multilingual-uncased",
                        "BERT": "bert-base-uncased",
-                       "XLM-R": "xlm-roberta-large"}
+                       "XLM-R": "xlm-roberta-base"}
 DEFAULT_EMBED_SIZE = {"small": 64, "xsmall": 32, "medium": 128, "large": 256}
 
 # # get the latest checkpoints
@@ -47,8 +47,10 @@ class CommonConfig(nn.Module):
         self.num_labels = args.num_labels
         self.fc = args.fc
         self.sample_config = LoggerConfig()
-        self.checkpoint = os.path.join(self.sample_config.checkpoints, f"finetune-{self.src}-{self.model_config}")  # /home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert
-
+        if args.checkpoints != "NA":
+            self.checkpoint = os.path.join(self.sample_config.checkpoints, f"finetune-{self.src}-{self.model_config}")  # /home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert
+        else:
+            self.checkpoint = DEFAULT_MODEL_NAMES[f"{args.model_config}"]
 class ModelFinetune(CommonConfig):
     def forward(self, input_ids, attention_mask):
         backbone = self.backbone(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=False)

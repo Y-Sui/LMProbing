@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="104bff8e-df7a-42c8-96fb-fe508f92b321" name="Changes" comment="official finetune code">
-      <change afterPath="$PROJECT_DIR$/paper-revision/prober.py" afterDir="false" />
+    <list default="true" id="104bff8e-df7a-42c8-96fb-fe508f92b321" name="Changes" comment="update UD datasets">
+      <change afterPath="$PROJECT_DIR$/paper-revision/probing_exp_raw.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paper-revision/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/paper-revision/dataloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/dataloader.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/paper-revision/finetune_exp.sh" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/finetune_exp.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/paper-revision/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/paper-revision/probing_exp.sh" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/probing_exp.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paper-revision/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/run_probing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/paper-revision/run_xnli.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/run_xnli.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paper-revision/run_paswx.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/run_paswx.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paper-revision/run_probing.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/run_probing.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,22 +71,22 @@
     <option name="showLibraryContents" value="true" />
     <option name="showMembers" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/v-yuansui/Code_base/EvalProbing/paper-revision&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "dart.analysis.tool.window.visible": "false",
+    "last_opened_file_path": "C:/Users/v-yuansui/Code_base/EvalProbing/paper-revision",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.editor"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;ChangesTree.GroupingKeys&quot;: [
-      &quot;directory&quot;
+  "keyToStringList": {
+    "ChangesTree.GroupingKeys": [
+      "directory"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\v-yuansui\Code_base\EvalProbing\paper-revision" />
@@ -96,8 +95,8 @@
       <recent name="E:\eval-probing" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.dataloader (1)">
-    <configuration name="aaaa" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.run_probing (1)">
+    <configuration name="conll18_ud_eval" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="eval-probing" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -105,34 +104,12 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Downloads" />
+      <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/aaaa.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="bio2num" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="eval-probing" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/dataset" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/dataset/bio2num.py" />
+      <option name="SCRIPT_NAME" value="$USER_HOME$/Downloads/conll18_ud_eval.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -163,28 +140,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="dataloader" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="eval-probing" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/dataloader.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="head_wise_run_bert_SST2" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="eval-probing" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -207,6 +162,28 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="iwpt20_xud_eval" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="eval-probing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$USER_HOME$/Downloads" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$USER_HOME$/Downloads/iwpt20_xud_eval.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="layer_wise_run_bert_SST2" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="eval-probing" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -222,6 +199,28 @@
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/bertology/evaluation/layer_wise_run_bert_SST2.py" />
       <option name="PARAMETERS" value="--model_name_or_path bert-base-uncased --dataset SST2 --output_dir ../../output/bert_classification --batch_size 16 --epochs 3 --max_length 50 --seed 1234" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="run_probing (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="eval-probing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/paper-revision" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/paper-revision/run_probing.py" />
+      <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -253,11 +252,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.run_probing (1)" />
+        <item itemvalue="Python.conll18_ud_eval" />
+        <item itemvalue="Python.iwpt20_xud_eval" />
         <item itemvalue="Python.dataloader (1)" />
         <item itemvalue="Python.run_probing" />
-        <item itemvalue="Python.bio2num" />
-        <item itemvalue="Python.dataloader" />
-        <item itemvalue="Python.aaaa" />
       </list>
     </recent_temporary>
   </component>
@@ -298,7 +297,7 @@
       <workItem from="1669021183145" duration="13313000" />
       <workItem from="1669175045955" duration="604000" />
       <workItem from="1669198247129" duration="16743000" />
-      <workItem from="1669296141330" duration="29063000" />
+      <workItem from="1669296141330" duration="45128000" />
     </task>
     <task id="LOCAL-00001" summary="add the final version of head_wise &amp; layer_wise model">
       <created>1657296664110</created>
@@ -510,7 +509,14 @@
       <option name="project" value="LOCAL" />
       <updated>1668419172551</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="update UD datasets">
+      <created>1669655697882</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1669655697882</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -551,20 +557,24 @@
     <MESSAGE value="modify exp config" />
     <MESSAGE value="delete head-wise or layer-wise (config.mode)" />
     <MESSAGE value="official finetune code" />
-    <option name="LAST_COMMIT_MESSAGE" value="official finetune code" />
+    <MESSAGE value="update UD datasets" />
+    <option name="LAST_COMMIT_MESSAGE" value="update UD datasets" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/eval_probing$run__1_.coverage" NAME="run (1) Coverage Results" MODIFIED="1666533853755" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
     <SUITE FILE_PATH="coverage/eval_probing$aaaa.coverage" NAME="aaaa Coverage Results" MODIFIED="1666013710542" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/eval_probing$dataloader__1_.coverage" NAME="dataloader (1) Coverage Results" MODIFIED="1666499696665" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
+    <SUITE FILE_PATH="coverage/eval_probing$test.coverage" NAME="test Coverage Results" MODIFIED="1660741391172" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/eval_probing$dataloader.coverage" NAME="dataloader Coverage Results" MODIFIED="1666015667276" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/EvalProbing$dataloader__1_.coverage" NAME="dataloader (1) Coverage Results" MODIFIED="1669569856640" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
+    <SUITE FILE_PATH="coverage/EvalProbing$conll18_ud_eval.coverage" NAME="conll18_ud_eval Coverage Results" MODIFIED="1669740004797" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$USER_HOME$/Downloads" />
+    <SUITE FILE_PATH="coverage/eval_probing$run__1_.coverage" NAME="run (1) Coverage Results" MODIFIED="1666533853755" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
     <SUITE FILE_PATH="coverage/eval_probing$bio2num.coverage" NAME="bio2num Coverage Results" MODIFIED="1666016564894" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dataset" />
     <SUITE FILE_PATH="coverage/eval_probing$run.coverage" NAME="run Coverage Results" MODIFIED="1661000606054" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/EvalProbing$test.coverage" NAME="test Coverage Results" MODIFIED="1663644530600" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/eval_probing$bio2num_single.coverage" NAME="bio2num_single Coverage Results" MODIFIED="1662388893637" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dataset" />
     <SUITE FILE_PATH="coverage/eval_probing$Bio2num.coverage" NAME="Bio2num Coverage Results" MODIFIED="1660963567620" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dataset" />
-    <SUITE FILE_PATH="coverage/eval_probing$dataloader__1_.coverage" NAME="dataloader (1) Coverage Results" MODIFIED="1666499696665" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
-    <SUITE FILE_PATH="coverage/eval_probing$test.coverage" NAME="test Coverage Results" MODIFIED="1660741391172" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/eval_probing$dataloader.coverage" NAME="dataloader Coverage Results" MODIFIED="1666015667276" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/EvalProbing$dataloader__1_.coverage" NAME="dataloader (1) Coverage Results" MODIFIED="1669569856640" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
+    <SUITE FILE_PATH="coverage/EvalProbing$iwpt20_xud_eval.coverage" NAME="iwpt20_xud_eval Coverage Results" MODIFIED="1669739857215" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$USER_HOME$/Downloads" />
+    <SUITE FILE_PATH="coverage/EvalProbing$run_probing__1_.coverage" NAME="run_probing (1) Coverage Results" MODIFIED="1669741305193" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
     <SUITE FILE_PATH="coverage/eval_probing$.coverage" NAME=" Coverage Results" MODIFIED="1660961118209" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
