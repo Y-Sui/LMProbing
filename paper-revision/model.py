@@ -48,7 +48,7 @@ class CommonConfig(nn.Module):
         self.fc = args.fc
         self.sample_config = LoggerConfig()
         if args.checkpoints != "NA":
-            self.checkpoint = os.path.join(self.sample_config.checkpoints, f"finetune-{self.src}-{self.model_config}")  # /home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert
+            self.checkpoint = args.checkpoints  # /home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert
         else:
             self.checkpoint = DEFAULT_MODEL_NAMES[f"{args.model_config}"]
 class ModelFinetune(CommonConfig):

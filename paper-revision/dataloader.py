@@ -51,7 +51,7 @@ class EvaluationProbing(DataConfig):
         self.logger.info(vars(args))
         # checkpoint path and tokenizer
         if args.checkpoints != "NA":
-            self.checkpoint = os.path.join(self.sample_config.checkpoints, f"finetune-{self.src}-{self.model_config}")  # /home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert
+            self.checkpoint = args.checkpoints  # /home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert
             self.tokenizer = PreTrainedTokenizerFast.from_pretrained(self.checkpoint)  # load tokenizer from json
         else:
             self.checkpoint = DEFAULT_MODEL_NAMES[f"{args.model_config}"]
