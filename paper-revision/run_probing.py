@@ -59,7 +59,7 @@ def main(args):
     # wandb init
     project = 'Eval Probing'
     entity = 'yuansui'
-    group = 'Paper-revision-probing-finetuned'
+    group = 'Paper-revision-probing-finetuned-en'
     display_name = f"corpus-[{args.corpus}]-lang-[{args.lang}]" # corpus-wikiann-lang-en
     wandb.init(reinit=True, project=project, entity=entity,
                name=display_name, group=group, tags=["train & eval"])
