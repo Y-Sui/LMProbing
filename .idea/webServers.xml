@@ -3,7 +3,7 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="bb6ee511-3ab5-4cd2-95b1-7998a0584c4e" name="Dartmouth">
-        <fileTransfer accessType="SFTP" host="localhost" port="33333" sshConfigId="291f0b36-327a-46d1-b1ab-0c95e3dc90eb" sshConfig="yuansui@localhost:33333 password">
+        <fileTransfer accessType="SFTP" host="localhost" port="5555" sshConfigId="291f0b36-327a-46d1-b1ab-0c95e3dc90eb" sshConfig="yuansui@localhost:5555 password">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

@@ -21,8 +21,6 @@
 #python run_paswx.py --model_name_or_path "xlm-roberta-base" --language en --do_eval --overwrite_output_dir  --output_dir "//home/weicheng/data_interns/yuansui/models/baseline"
 
 
-
-
 # pawsx dataset
 python run_paswx.py --model_name_or_path "bert-base-multilingual-uncased" --language en --train_language en --do_train --do_eval --num_train_epochs 2.0 --max_seq_length 128 --output_dir "//home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert-en" --save_steps 10000 --per_gpu_train_batch_size 32 --learning_rate 5e-5  --warmup_steps 1200 --weight_decay 0.1
 
