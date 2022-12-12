@@ -51,6 +51,8 @@ class CommonConfig(nn.Module):
             self.checkpoint = args.checkpoints  # /home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert
         else:
             self.checkpoint = DEFAULT_MODEL_NAMES[f"{args.model_config}"]
+
+
 class ModelFinetune(CommonConfig):
     def forward(self, input_ids, attention_mask):
         backbone = self.backbone(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=False)

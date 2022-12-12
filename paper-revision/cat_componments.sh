@@ -1,0 +1,5 @@
+# concatenate encoder from all_languages and classifier from en
+python concatenate_componment.py --checkpoints "//home/weicheng/data_interns/yuansui/models/finetune-xnli-mbert" --checkpoints2 "//home/weicheng/data_interns/yuansui/models/finetune-xnli-mbert-en"
+python concatenate_componment.py --checkpoints "//home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert" --checkpoints2 "//home/weicheng/data_interns/yuansui/models/finetune-pawsx-mbert-en"
+python concatenate_componment.py --checkpoints "//home/weicheng/data_interns/yuansui/models/finetune-xnli-xlm-base" --checkpoints2 "//home/weicheng/data_interns/yuansui/models/finetune-xnli-xlm-base-en"
+python concatenate_componment.py --checkpoints "//home/weicheng/data_interns/yuansui/models/finetune-pawsx-xlm-base" --checkpoints2 "//home/weicheng/data_interns/yuansui/models/finetune-pawsx-xlm-base-en"

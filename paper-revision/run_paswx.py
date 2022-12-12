@@ -278,7 +278,7 @@ def main():
     config = AutoConfig.from_pretrained(
         model_args.config_name if model_args.config_name else model_args.model_name_or_path,
         num_labels=num_labels,
-        finetuning_task="paws-x",
+        finetuning_task=f"paws-x-{model_args.language}",
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
@@ -298,8 +298,11 @@ def main():
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
-        ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
+        ignore_mismatched_sizes=False,
     )
+
+    for param in model.base_model.parameters():
+        param.requires_grad = False # freeze base model
 
     # Preprocessing the datasets
     # Padding strategy

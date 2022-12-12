@@ -39,7 +39,7 @@ def get_argument():
     parser.add_argument("--no_cuda", action="store_true", help="Whether not to use CUDA when available")
     parser.add_argument("--epochs", default=15, type=int)
     parser.add_argument("--max_length", default=50, type=int, help="Max length of the tokenization")
-    parser.add_argument("--num_workers", default=0, type=int)
+    parser.add_argument("--num_workers", default=4, type=int)
     parser.add_argument("--lr", default=0.0001, type=float)
     parser.add_argument("--profile", action="store_true", help="whether to generate the heatmap")
     parser.add_argument("--mode", choices=["layer-wise", "head-wise"], type=str, help="choose training mode")
@@ -94,10 +94,13 @@ class Sequence_Classification:
         return list(tag_dict.keys())
 
     def tokenize_and_align_labels(self, example):
-        tokenized_inputs = self.tokenizer(example["tokens"],
-                                          truncation=True,
-                                          is_split_into_words=True,
-                                          padding="max_length", max_length=self.max_length) # is_split_into_words=True, whether or not the input is already pre-tokenized
+        tokenized_inputs = self.tokenizer(
+            example["tokens"],
+            truncation=True,
+            is_split_into_words=True,
+            padding="max_length",
+            max_length=self.max_length
+        ) # is_split_into_words=True, whether or not the input is already pre-tokenized
         labels = []
         for i, label in enumerate(example[f"{self.task}_tags"]):
             word_ids = tokenized_inputs.word_ids(batch_index=i)  # Map tokens to their respective word.
@@ -115,7 +118,7 @@ class Sequence_Classification:
         tokenized_inputs["labels"] = labels
         return  tokenized_inputs
 
-    def construct_data_loader(self, batch_size, idx, file_path, shuffle=True, num_workers=0, rank=0):
+    def construct_data_loader(self, batch_size, idx, file_path, shuffle=True, num_workers=4, rank=0):
         corpus = load_dataset("json",
                               field="data",
                               data_files={

@@ -228,7 +228,7 @@ def main():
             train_dataset = load_dataset(
                 "xnli",
                 model_args.language,
-                split="train",
+                split="validation", # train
                 cache_dir=model_args.cache_dir,
                 use_auth_token=True if model_args.use_auth_token else None,
             )
@@ -236,14 +236,14 @@ def main():
             if model_args.train_language == "all_languages":
                 dfs = []
                 for lang in DEFALT_LANGUAGES["xnli"][:-1]:
-                    df = load_dataset("xnli", lang, split="train", cache_dir=model_args.cache_dir, use_auth_token=True if model_args.use_auth_token else None)
+                    df = load_dataset("xnli", lang, split="validation", cache_dir=model_args.cache_dir, use_auth_token=True if model_args.use_auth_token else None) # train
                     dfs.append(df)
                 train_dataset = concatenate_datasets(dfs)
             else:
                 train_dataset = load_dataset(
                     "xnli",
                     model_args.train_language,
-                    split="train",
+                    split="validation", # train
                     cache_dir=model_args.cache_dir,
                     use_auth_token=True if model_args.use_auth_token else None,
                 )
@@ -278,7 +278,7 @@ def main():
     config = AutoConfig.from_pretrained(
         model_args.config_name if model_args.config_name else model_args.model_name_or_path,
         num_labels=num_labels,
-        finetuning_task="xnli",
+        finetuning_task=f"xnli-{model_args.language}",
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
@@ -298,8 +298,11 @@ def main():
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
-        ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
+        ignore_mismatched_sizes=False,
     )
+
+    for param in model.base_model.parameters():
+        param.requires_grad = False # freeze base model
 
     # Preprocessing the datasets
     # Padding strategy

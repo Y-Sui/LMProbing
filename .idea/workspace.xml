@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="104bff8e-df7a-42c8-96fb-fe508f92b321" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/paper-revision/plot_head_magnitude.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/eval-probing.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/eval-probing.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_23_2022_11_11_AM__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_23_2022_11_11_AM__Changes_.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sshConfigs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sshConfigs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/webServers.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/webServers.xml" afterDir="false" />
+    <list default="true" id="104bff8e-df7a-42c8-96fb-fe508f92b321" name="Changes" comment="done paper-revision exp">
+      <change afterPath="$PROJECT_DIR$/paper-revision/cat_componments.sh" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/paper-revision/concatenate_componment.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataloader.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataloader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dataset/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/dataset/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/paper-revision/finetune_exp.sh" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/finetune_exp.sh" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/paper-revision/head_magnitude.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/head_magnitude.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paper-revision/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paper-revision/plot_head_magnitude.sh" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/plot_head_magnitude.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paper-revision/run_paswx.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/run_paswx.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/paper-revision/run_xnli.py" beforeDir="false" afterPath="$PROJECT_DIR$/paper-revision/run_xnli.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/run.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run.sh" beforeDir="false" afterPath="$PROJECT_DIR$/run.sh" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -97,6 +102,28 @@
     </key>
   </component>
   <component name="RunManager" selected="Python.head_magnitude">
+    <configuration name="concatenate_componment" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="eval-probing" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/paper-revision" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/paper-revision/concatenate_componment.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="conll18_ud_eval" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="eval-probing" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -111,28 +138,6 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$USER_HOME$/Downloads/conll18_ud_eval.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="dataloader (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="eval-probing" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/paper-revision" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/paper-revision/dataloader.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -254,10 +259,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.head_magnitude" />
+        <item itemvalue="Python.concatenate_componment" />
         <item itemvalue="Python.run_probing (1)" />
         <item itemvalue="Python.conll18_ud_eval" />
         <item itemvalue="Python.iwpt20_xud_eval" />
-        <item itemvalue="Python.dataloader (1)" />
       </list>
     </recent_temporary>
   </component>
@@ -539,7 +544,14 @@
       <option name="project" value="LOCAL" />
       <updated>1670134778390</updated>
     </task>
-    <option name="localTasksCounter" value="35" />
+    <task id="LOCAL-00035" summary="done paper-revision exp">
+      <created>1670676025900</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1670676025900</updated>
+    </task>
+    <option name="localTasksCounter" value="36" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -557,7 +569,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="add the demo run_bert_classification.py" />
     <MESSAGE value="add the dataset/sst2" />
     <MESSAGE value="add bert_classification_head_wise_final_score &amp; layer_wise_final_score.txt" />
     <MESSAGE value="add dataloader.py, model.py, run.py" />
@@ -582,16 +593,18 @@
     <MESSAGE value="update UD datasets" />
     <MESSAGE value="paper-revision comparison" />
     <MESSAGE value="fix a bug regarding checkpoint selection" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix a bug regarding checkpoint selection" />
+    <MESSAGE value="done paper-revision exp" />
+    <option name="LAST_COMMIT_MESSAGE" value="done paper-revision exp" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/EvalProbing$iwpt20_xud_eval.coverage" NAME="iwpt20_xud_eval Coverage Results" MODIFIED="1669739857215" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$USER_HOME$/Downloads" />
     <SUITE FILE_PATH="coverage/eval_probing$.coverage" NAME=" Coverage Results" MODIFIED="1660961118209" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/eval_probing$run__1_.coverage" NAME="run (1) Coverage Results" MODIFIED="1666533853755" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
+    <SUITE FILE_PATH="coverage/eval_probing$concatenate_componment.coverage" NAME="concatenate_componment Coverage Results" MODIFIED="1670752651916" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
     <SUITE FILE_PATH="coverage/eval_probing$bio2num_single.coverage" NAME="bio2num_single Coverage Results" MODIFIED="1662388893637" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dataset" />
     <SUITE FILE_PATH="coverage/eval_probing$run.coverage" NAME="run Coverage Results" MODIFIED="1661000606054" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/eval_probing$Bio2num.coverage" NAME="Bio2num Coverage Results" MODIFIED="1660963567620" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dataset" />
-    <SUITE FILE_PATH="coverage/eval_probing$head_magnitude.coverage" NAME="head_magnitude Coverage Results" MODIFIED="1670675288141" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
+    <SUITE FILE_PATH="coverage/eval_probing$head_magnitude.coverage" NAME="head_magnitude Coverage Results" MODIFIED="1670830631004" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
     <SUITE FILE_PATH="coverage/EvalProbing$dataloader__1_.coverage" NAME="dataloader (1) Coverage Results" MODIFIED="1669569856640" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/paper-revision" />
     <SUITE FILE_PATH="coverage/eval_probing$dataloader.coverage" NAME="dataloader Coverage Results" MODIFIED="1666015667276" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/eval_probing$bio2num.coverage" NAME="bio2num Coverage Results" MODIFIED="1666016564894" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/dataset" />

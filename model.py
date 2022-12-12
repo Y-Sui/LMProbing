@@ -2,69 +2,83 @@ import torch
 import torch.nn as nn
 from transformers import AutoModel
 
+DEFAULT_MODEL_NAMES = {"M-BERT": "bert-base-multilingual-uncased",
+                       "BERT": "bert-base-uncased",
+                       "XLM-R": "xlm-roberta-base"}
+DEFAULT_EMBED_SIZE = {"small": 64, "xsmall": 32, "medium": 128, "large": 256}
 
-class Bert_4_Classification_Layer_Wise(nn.Module):
-
-    def __init__(self, ptm="bert-base-uncased", embed_size=256, num_labels=2):
-        super(Bert_4_Classification_Layer_Wise, self).__init__()
-        self.backbone = AutoModel.from_pretrained(ptm)
-        for p in self.backbone.parameters():
-            p.requires_grad = False  # freeze the backbone model
-        self.last_hidden_state_size = self._get_last_hidden_state_size()
-        self.classifier = nn.Sequential(
-            nn.Linear(self.last_hidden_state_size, embed_size),
-            nn.Dropout(0.5),
-            nn.Linear(embed_size, num_labels)
-        )
+class LayerWiseConfig(nn.Module):
+    def __init__(self, args):
+        super().__init__()
+        self.max_length = args.max_length
+        self.batch_size = args.batch_size
+        self.embed_size = DEFAULT_EMBED_SIZE[args.embed_size]
+        self.model = args.model_name_or_path
 
     def forward(self, input_ids, attention_mask):
         backbone = self.backbone(input_ids=input_ids,
                                  attention_mask=attention_mask,
                                  output_hidden_states=True)  # output all the hidden states rather than the last layer
-        layers = list(backbone.hidden_states)  # save each layer's output
-        for layer_idx in range(len(layers)):
-            layers[layer_idx] = self.classifier(layers[layer_idx])
-        return layers
+        layers_logits = list(backbone.hidden_states)  # save each layer's output
+        for layer_idx in range(len(layers_logits)):
+            layers_logits[layer_idx] = self.classifier(layers_logits[layer_idx])
+        return layers_logits
 
     def _get_last_hidden_state_size(self):
         backbone = self.backbone(torch.tensor([[1, 1]]), torch.tensor([[1, 1]]), output_hidden_states=True)
         self.hidden_states = backbone.hidden_states
         return backbone.hidden_states[0].shape[-1]
 
-class Bert_4_Classification_Head_Wise(nn.Module):
-    """
-    Split the layer wise
-    """
-
-    def __init__(self, ptm="bert-base-uncased", embed_size=32, num_labels=2):
-        super(Bert_4_Classification_Head_Wise, self).__init__()
-        self.backbone = AutoModel.from_pretrained(ptm)
-        self.num_heads = self.backbone.config.num_attention_heads
-        self.last_hidden_state_size = self._get_last_hidden_state_size()
-        self.num_labels = num_labels
-        for p in self.backbone.parameters():
-            p.requires_grad = False  # freeze the backbone model
-        self.classifier = nn.Sequential(
-            nn.Linear(64, embed_size),
-            nn.Dropout(0.5),
-            nn.Linear(embed_size, num_labels)
-        )
+class HeadWiseConfig(nn.Module):
+    def __init__(self, args):
+        super().__init__()
+        self.max_length = args.max_length
+        self.batch_size = args.batch_size
+        self.embed_size = DEFAULT_EMBED_SIZE[args.embed_size]
+        self.model = args.model_name_or_path
 
     def forward(self, input_ids, attention_mask):
         backbone = self.backbone(input_ids=input_ids,
                                  attention_mask=attention_mask,
                                  output_hidden_states=True)  # output all the hidden states rather than the last layer
         layers = list(backbone.hidden_states)
-        heads = []
+        heads_logits = []
         for layer_idx in range(len(layers)):
             for head_idx in range(self.num_heads):
                 split_heads = layers[layer_idx].chunk(self.num_heads, 2) # split 768 into 12 sections (heads)
-                heads.append(self.classifier(split_heads[head_idx]))
-        return heads
+                heads_logits.append(self.classifier(split_heads[head_idx]))
+        return heads_logits
 
     def _get_last_hidden_state_size(self):
         backbone = self.backbone(torch.tensor([[1, 1]]), torch.tensor([[1, 1]]), output_hidden_states=True)
         self.hidden_states = backbone.hidden_states
         return backbone.hidden_states[0].shape[-1]
+
+class MBertLayerWise(LayerWiseConfig):
+    def __init__(self, args, num_labels):
+        super().__init__(args)
+        self.backbone = AutoModel.from_pretrained(self.model)
+        for p in self.backbone.parameters():
+            p.requires_grad = False  # freeze the backbone model
+        self.last_hidden_state_size = self._get_last_hidden_state_size()
+        self.classifier = nn.Sequential(
+            nn.Linear(self.last_hidden_state_size, 128),
+            nn.Dropout(0.3),
+            nn.Linear(128, len(num_labels)),
+        )
+
+class MBertHeadWise(HeadWiseConfig):
+    def __init__(self, args, num_labels):
+        super().__init__(args)
+        self.backbone = AutoModel.from_pretrained(self.model)
+        self.num_heads = self.backbone.config.num_attention_heads
+        self.last_hidden_state_size = self._get_last_hidden_state_size()
+        for p in self.backbone.parameters():
+            p.requires_grad = False  # freeze the backbone model
+        self.classifier = nn.Sequential(
+            nn.Linear(64, 32),
+            nn.Dropout(0.3),
+            nn.Linear(32, len(num_labels)),
+        )
 
 

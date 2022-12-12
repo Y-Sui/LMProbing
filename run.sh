@@ -1,15 +1,15 @@
 #!/usr/bin/python
 
-python run.py --task "ner" --model_name_or_path "bert-base-uncased" --mode=layer-wise --epochs 30 --batch_size 2048 --max_length 50 --lr 0.0001 --seed 1234
-python run.py --task "chunk" --model_name_or_path "bert-base-uncased" --mode=layer-wise --epochs 30 --batch_size 2048 --max_length 50 --lr 0.0001 --seed 1234
-python run.py --task "dependency-fixed" --model_name_or_path "bert-base-uncased" --mode=layer-wise --epochs 30 --batch_size 2048 --max_length 50 --lr 0.0001 --seed 1234
-python run.py --task "pos-fixed" --model_name_or_path "bert-base-uncased" --mode=layer-wise --epochs 30 --batch_size 2048 --max_length 50 --lr 0.0001 --seed 1234
+python run.py --task "ner" --model_name_or_path "bert-base-uncased" --mode=layer-wise --epochs 8 --batch_size 64 --max_length 64 --lr 1e-4 --seed 1234
+python run.py --task "chunk" --model_name_or_path "bert-base-uncased" --mode=layer-wise --epochs 8 --batch_size 64 --max_length 64 --lr 1e-4 --seed 1234
+python run.py --task "dependency-fixed" --model_name_or_path "bert-base-uncased" --mode=layer-wise --epochs 8 --batch_size 64 --max_length 64 --lr 1e-4 --seed 1234
+python run.py --task "pos-fixed" --model_name_or_path "bert-base-uncased" --mode=layer-wise --epochs 8 --batch_size 64 --max_length 64 --lr 1e-4 --seed 1234
 
 
-python run.py --task "ner" --model_name_or_path "bert-base-uncased" --mode=head-wise --epochs 30 --batch_size 2048 --max_length 50 --lr 0.0001 --seed 1234
-python run.py --task "chunk" --model_name_or_path "bert-base-uncased" --mode=head-wise --epochs 30 --batch_size 2048 --max_length 50 --lr 0.0001 --seed 1234
-python run.py --task "dependency-fixed" --model_name_or_path "bert-base-uncased" --mode=head-wise --epochs 30 --batch_size 2048 --max_length 50 --lr 0.0001 --seed 1234
-python run.py --task "pos-fixed" --model_name_or_path "bert-base-uncased" --mode=head-wise --epochs 30 --batch_size 2048 --max_length 50 --lr 0.0001 --seed 1234
+python run.py --task "ner" --model_name_or_path "bert-base-uncased" --mode=head-wise --epochs 8 --batch_size 64 --max_length 64 --lr 1e-4 --seed 1234
+python run.py --task "chunk" --model_name_or_path "bert-base-uncased" --mode=head-wise --epochs 8 --batch_size 64 --max_length 64 --lr 1e-4 --seed 1234
+python run.py --task "dependency-fixed" --model_name_or_path "bert-base-uncased" --mode=head-wise --epochs 8 --batch_size 64 --max_length 64 --lr 1e-4 --seed 1234
+python run.py --task "pos-fixed" --model_name_or_path "bert-base-uncased" --mode=head-wise --epochs 8 --batch_size 64 --max_length 64 --lr 1e-4 --seed 1234
 
 
 

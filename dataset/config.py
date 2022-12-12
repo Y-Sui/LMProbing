@@ -2,9 +2,9 @@ import os.path
 
 class DataConfig:
     def __init__(self):
-        self.data_path = "//home/weicheng/data_interns/yuan/datasets"
-        self.logging_path = "//home/weicheng/data_interns/yuan/logging"
-        self.checkpoints = "//home/weicheng/data_interns/yuan/models"
+        self.data_path = "//home/weicheng/data_interns/yuansui/datasets"
+        self.logging_path = "//home/weicheng/data_interns/yuansui/logging"
+        self.checkpoints = "//home/weicheng/data_interns/yuansui/models"
         self.corpus = ["ner", "chunk", "pos-fixed", "dependency-fixed"]
         self.output_path = "//home/yuansui/eval-probing/output"
         self.mkdir()
