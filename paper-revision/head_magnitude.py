@@ -28,20 +28,42 @@ def plot_head_magnitude(layers, heads, features, args):
     # plot it
     plt.figure(figsize=(10, 9))
     plt.rc('font', size=18)
+
+    if args.normalize is False:
+        if args.plot_difference is False:
+            # argument plotting
+            df_sort[df_sort[df_sort > -0.0002] < 0.0002] = df_sort[df_sort[df_sort > -0.0002] < 0.0002] * 0.3  # -0.0005 ~ 0.0005
+            df_sort[df_sort[df_sort > 0.0002] < 0.0005] = df_sort[df_sort[df_sort > 0.0002] < 0.0005] * 0.5  # 0.0005 ~ 0.0010
+            df_sort[df_sort[df_sort < -0.0002] > -0.0005] = df_sort[df_sort[df_sort < -0.0002] > -0.0005] * 1.6  # -0.0005 ~ -0.0010
+            df_sort[df_sort < -0.0005] = df_sort[df_sort < -0.0005] * 1.8
+            df_sort[df_sort > 0.0005] = df_sort[df_sort > 0.0005] * 1.8
+        else:
+            # argument plotting
+            df_sort[df_sort[df_sort > -0.5] < 0.5] = df_sort[df_sort[df_sort > -0.5] < 0.5] * 0.3
+            df_sort[df_sort[df_sort > 0.5] < 1.0] = df_sort[df_sort[df_sort > 0.5] < 1.0] * 0.6
+            df_sort[df_sort[df_sort < -0.5] > -1.0] = df_sort[df_sort[df_sort < -0.5] > -1.0] * 0.6
+            df_sort[df_sort > 1.0] = df_sort[df_sort > 1.0] * 1.5
+            df_sort[df_sort < 1.0] = df_sort[df_sort < 1.0] * 1.5
+    else:
+        # argument plotting
+        df_sort[df_sort < 0.3] = df_sort[df_sort < 0.3] * 0.3
+        df_sort[df_sort[df_sort > 0.3] < 0.5] = df_sort[df_sort[df_sort > 0.3] < 0.5] * 0.5
+        df_sort[df_sort > 0.5] = df_sort[df_sort > 0.5] * 1.6
+
     if args.plot_difference:
-        # ax = sns.heatmap(df_wide, cbar=False, center=0)
-        ax = sns.heatmap(df_sort, cbar=False, center=0)
+        sns.heatmap(df_sort, cbar=False, center=0)
     else:
         sns.heatmap(df_sort, cbar=False)
-    # plt.xticks(fontsize=12)
-    # plt.yticks(fontsize=12)
 
     # save the plotting
     if args.plot_difference:
         if args.normalize:
             plt.savefig(os.path.join("./magnitudes/", f"{args.checkpoints.split('/')[-1]}_difference.pdf"))
         else:
-            plt.savefig(os.path.join("./magnitudes/fpd", f"{args.checkpoints2.split('/')[-1]}_unnormalized_difference_raw.pdf"))
+            if args.checkpoints.__contains__("//home/weicheng") is False and args.checkpoints2 is not None:
+                plt.savefig(os.path.join("./magnitudes/fpd", f"{args.checkpoints2.split('/')[-1]}_unnormalized_difference_raw.pdf"))
+            else:
+                plt.savefig(os.path.join("./magnitudes/", f"{args.checkpoints2.split('/')[-1]}_unnormalized_difference.pdf"))
     else:
         if args.normalize:
             plt.savefig(os.path.join("./magnitudes/", f"{args.checkpoints.split('/')[-1]}.pdf"))
@@ -121,7 +143,7 @@ def plot_difference_checkpoints(args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--checkpoints", type=str, default="xlm-roberta-base")
-    parser.add_argument("--checkpoints2", type=str, default="bert-base-multilingual-uncased")
+    parser.add_argument("--checkpoints2", type=str, default="xlm-roberta-large")
     parser.add_argument("--normalize", action="store_true", help="whether to normalize the output", default=False)
     parser.add_argument("--plot_difference", action="store_true", help="whether to plot difference", default=False)
     args = parser.parse_args()
