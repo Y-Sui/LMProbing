@@ -16,6 +16,7 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message
                     datefmt='%m/%d/%Y %H:%M:%S',
                     level=logging.INFO)
 
+
 def get_argument():
     # Required parameters
     parser = argparse.ArgumentParser()
@@ -50,6 +51,7 @@ def get_argument():
 
     return args
 
+
 def get_files_path(filePath, outPath):
     """
     return the file list
@@ -69,6 +71,22 @@ def get_files_path(filePath, outPath):
     file_paths["train"], file_paths["eval"] = train_files, eval_files
     return file_paths
 
+
+def get_tag_dict(category):
+    tag_dict = {"O": 0, f"B-{category}": 1, f"I-{category}": 2}
+    if category.islower():
+        tag_dict = {"O": 0, "B-head": 1, "B-dependent": 2}
+    if category == "VP":
+        tag_dict = {"O": 0, "B-ADVP": 1, "I-ADVP": 2, "B-VP": 3, "I-VP": 4}
+    if category == "":
+        tag_dict = {"O": 0, "B-:": 1, "I-:": 2}
+    if category == "EX":
+        tag_dict = {"O": 0, "B-E:": 1, "I-E:": 2}
+    if category == "TO":
+        tag_dict = {"O": 0, "B-T:": 1, "I-T:": 2}
+    return list(tag_dict.keys())
+
+
 class Sequence_Classification:
 
     def __init__(self, args):
@@ -79,20 +97,6 @@ class Sequence_Classification:
         self.logger = logging.getLogger("Sequence classification")
         self.logger.info("start dataloader generation")
 
-    def get_tag_dict(self, category):
-        tag_dict = {"O": 0, f"B-{category}": 1, f"I-{category}": 2}
-        if category.islower():
-            tag_dict = {"O": 0, "B-head": 1, "B-dependent": 2}
-        if category == "VP":
-            tag_dict = {"O": 0, "B-ADVP": 1, "I-ADVP": 2, "B-VP": 3, "I-VP": 4}
-        if category == "":
-            tag_dict = {"O": 0, "B-:": 1, "I-:": 2}
-        if category == "EX":
-            tag_dict = {"O": 0, "B-E:": 1, "I-E:": 2}
-        if category == "TO":
-            tag_dict = {"O": 0, "B-T:": 1, "I-T:": 2}
-        return list(tag_dict.keys())
-
     def tokenize_and_align_labels(self, example):
         tokenized_inputs = self.tokenizer(
             example["tokens"],
@@ -100,7 +104,7 @@ class Sequence_Classification:
             is_split_into_words=True,
             padding="max_length",
             max_length=self.max_length
-        ) # is_split_into_words=True, whether or not the input is already pre-tokenized
+        )  # is_split_into_words=True, whether or not the input is already pre-tokenized
         labels = []
         for i, label in enumerate(example[f"{self.task}_tags"]):
             word_ids = tokenized_inputs.word_ids(batch_index=i)  # Map tokens to their respective word.
@@ -116,7 +120,7 @@ class Sequence_Classification:
                 previous_word_idx = word_idx
             labels.append(label_ids)
         tokenized_inputs["labels"] = labels
-        return  tokenized_inputs
+        return tokenized_inputs
 
     def construct_data_loader(self, batch_size, idx, file_path, shuffle=True, num_workers=4, rank=0):
         corpus = load_dataset("json",
@@ -131,15 +135,18 @@ class Sequence_Classification:
         probing_dataset.set_format(type='torch', columns=['input_ids', 'attention_mask', 'labels'])
 
         probing_train_dataset, probing_valid_dataset = probing_dataset["train"], probing_dataset["validation"]
-        probing_train_dataloader = DataLoader(probing_train_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
-        probing_eval_dataloader = DataLoader(probing_valid_dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+        probing_train_dataloader = DataLoader(probing_train_dataset, batch_size=batch_size, shuffle=shuffle,
+                                              num_workers=num_workers)
+        probing_eval_dataloader = DataLoader(probing_valid_dataset, batch_size=batch_size, shuffle=shuffle,
+                                             num_workers=num_workers)
 
         # Load the label_list (single samples)
         category = file_path["train"][idx].split("_")[-2]
         self.logger.info(f"get the {category} corresponding tag dict")
-        tag_dict = self.get_tag_dict(category)
+        tag_dict = get_tag_dict(category)
 
         return probing_train_dataloader, probing_eval_dataloader, tag_dict
+
 
 def get_sequence_classification(idx, flag):
     args = get_argument()
@@ -167,6 +174,7 @@ def get_sequence_classification(idx, flag):
                                                                          num_workers=args.num_workers)
         return neg_probing_train_dataloader, neg_probing_eval_dataloader, neg_probing_label_list
 
+
 def main():
     args = get_argument()
     sample_config = DataConfig()
@@ -176,6 +184,7 @@ def main():
                                      outPath=os.path.join(sample_config.output_path, f"{args.task}"))
     for i in range(len(pos_sample_path["train"])):
         a, b, c = get_sequence_classification(i, "pos")
+
 
 if __name__ == "__main__":
     main()

@@ -1,28 +1,25 @@
 import os
 import time
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "1" # set the cuda card 2,3,4,5
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-from transformers import get_scheduler
-
 import argparse
 import logging
 import wandb
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from tqdm import tqdm
-from matplotlib import pyplot as plt
-
-from seqeval.metrics import f1_score, accuracy_score, recall_score, precision_score
-
 import torch
 import torch.nn as nn
+
+from transformers import get_scheduler
+from tqdm import tqdm
+from matplotlib import pyplot as plt
+from seqeval.metrics import f1_score, accuracy_score, recall_score, precision_score
 from datasets import load_metric
 from dataset.config import DataConfig
 from model import MBertHeadWise, MBertLayerWise
 from dataloader import get_files_path, get_sequence_classification
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "1" # set the cuda card 2,3,4,5
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S',
